@@ -76,7 +76,7 @@ SELECT BUY_SHARES('mike', 'MM', 5);
     FETCH FIRST ROW ONLY;
 
 CREATE OR REPLACE VIEW costView AS
-    SELECT price, div(d.balance, price) AS purchaseable, d.login, d.symbol, d.balance, d.p_date AS mutDATE, closing_price.p_date AS closeDATE
+    SELECT price, div(d.balance, price) AS purchasable, d.login, d.symbol, d.balance, d.p_date AS mutDATE, closing_price.p_date AS closeDATE
     FROM closing_price JOIN doview d on closing_price.symbol = d.symbol
     ORDER BY closeDATE DESC
     FETCH NEXT 2 ROWS ONLY;*/
@@ -85,8 +85,87 @@ CREATE OR REPLACE VIEW costView AS
 
 CREATE OR REPLACE FUNCTION buy_on_date()
     RETURNS TRIGGER AS
-$$
-BEGIN
-END;
-$$
-LANGUAGE 'plpgsql';
+    $$
+    DECLARE
+    userLog varchar(10);
+    symbol varchar(20);
+    purchasable int;
+    mutDate date;
+    currDate date;
+    BEGIN
+        userLog := (SELECT login
+            FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
+            ORDER BY shares ASC
+            FETCH FIRST ROW ONLY);
+
+        symbol := (SELECT symbol
+            FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
+            ORDER BY shares ASC
+            FETCH FIRST ROW ONLY);
+
+        purchasable := (SELECT div(balance, price)
+            FROM closing_price JOIN owns o on closing_price.symbol = o.symbol JOIN customer c2 on c2.login = o.login
+            ORDER BY p_date DESC
+            FETCH FIRST 2 ROWS ONLY);
+
+        mutDate := (SELECT p_date
+            FROM mutual_date);
+
+        currDate := CAST(CURRENT_DATE AS DATE);
+
+        IF mutDate = currDate THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
+        END IF;
+
+    END;
+    $$
+    LANGUAGE 'plpgsql';
+
+/* CODE FOR FIRING TRIGGER???????? */
+
+/* Question 6 */
+
+CREATE OR REPLACE FUNCTION buy_on_price()
+    RETURNS TRIGGER AS
+    $$
+    DECLARE
+    userLog varchar(10);
+    symbol varchar(20);
+    purchasable int;
+    prevPrice decimal(10, 2);
+    currPrice decimal(10, 2);
+    BEGIN
+        userLog := (SELECT login
+            FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
+            ORDER BY shares ASC
+            FETCH FIRST ROW ONLY);
+
+        symbol := (SELECT symbol
+            FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
+            ORDER BY shares ASC
+            FETCH FIRST ROW ONLY);
+
+        purchasable := (SELECT div(balance, price)
+            FROM closing_price JOIN owns o on closing_price.symbol = o.symbol JOIN customer c2 on c2.login = o.login
+            ORDER BY p_date DESC
+            FETCH FIRST 2 ROWS ONLY);
+
+        prevPrice := (SELECT price
+            FROM closing_price
+            WHERE closing_price.symbol = symbol
+            ORDER BY p_date DESC
+            FETCH NEXT 1 ROW ONLY);
+
+        currPrice := (SELECT price
+            FROM closing_price
+            WHERE closing_price.symbol = symbol
+            ORDER BY p_date DESC
+            FETCH FIRST ROW ONLY);
+
+        IF prevPrice != currPrice THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
+        END IF;
+
+    END;
+    $$
+    LANGUAGE 'plpgsql';
+
+/* CODE FOR FIRING TRIGGER???????? */
