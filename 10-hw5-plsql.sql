@@ -69,9 +69,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
 
 SELECT BUY_SHARES('mike', 'MM', 5);
 
-/* Question 5 */
-
-CREATE OR REPLACE VIEW doView AS
+/*CREATE OR REPLACE VIEW doView AS
     SELECT owns.login, symbol, c.balance, m.p_date
     FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
     ORDER BY shares ASC
@@ -81,20 +79,14 @@ CREATE OR REPLACE VIEW costView AS
     SELECT price, div(d.balance, price) AS purchaseable, d.login, d.symbol, d.balance, d.p_date AS mutDATE, closing_price.p_date AS closeDATE
     FROM closing_price JOIN doview d on closing_price.symbol = d.symbol
     ORDER BY closeDATE DESC
-    FETCH NEXT 2 ROWS ONLY;
+    FETCH NEXT 2 ROWS ONLY;*/
 
-CREATE TRIGGER buy_on_date
-    BEFORE INSERT OR UPDATE
-    ON costView
-    FOR EACH ROW
-    WHEN (costView.mutDATE = CAST(CURRENT_DATE AS DATE))
-    EXECUTE FUNCTION BUY_SHARES(costView.login, costView.symbol, costView.purchaseable);
+/* Question 5 */
 
-/* Question 6 */
-
-CREATE TRIGGER buy_on_price
-    BEFORE INSERT OR UPDATE
-    ON costView
-    FOR EACH ROW
-    /*?????? Price of row 1 different from Price of row 2?*/
-    EXECUTE FUNCTION BUY_SHARES(costView.login, costView.symbol, costView.purchaseable);
+CREATE OR REPLACE FUNCTION buy_on_date()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+END;
+$$
+LANGUAGE 'plpgsql';
