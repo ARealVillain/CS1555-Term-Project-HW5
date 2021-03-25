@@ -1,13 +1,12 @@
-
-
-
 /* Mutual Fund Information */
+DROP TABLE IF EXISTS MUTUAL_FUND CASCADE;
+DROP TABLE IF EXISTS CLOSING_PRICE CASCADE;
 
-CREATE TABLE MUTUALFUND(
+CREATE TABLE MUTUAL_FUND(
     symbol varchar(20),
-    name varchar(20),
-    description varchar(20),
-    category varchar(20),
+    name varchar(30),
+    description varchar(100),
+    category varchar(10),
     c_date date,
     CONSTRAINT pk_mutualfund PRIMARY KEY (symbol)
 );
@@ -17,7 +16,7 @@ CREATE TABLE CLOSING_PRICE(
     price decimal(10, 2),
     p_date date,
     CONSTRAINT pk_closingprice PRIMARY KEY (symbol, p_date),
-    CONSTRAINT fk_closingprice FOREIGN KEY (symbol) REFERENCES MUTUALFUND(symbol)
+    CONSTRAINT fk_closingprice FOREIGN KEY (symbol) REFERENCES MUTUAL_FUND(symbol)
 );
 
 /* Customers Information */
@@ -35,7 +34,7 @@ CREATE TABLE CUSTOMER
     email         varchar(30),
     address       varchar(10),
     password      varchar(50),
-    balance       numeric(10, 2)
+    balance       numeric(10, 2),
     CONSTRAINT CUSTOMER_PK PRIMARY KEY (login),
     CONSTRAINT EMAIL_UQ UNIQUE (email)
 );
@@ -55,8 +54,8 @@ CREATE TABLE PREFERS
     symbol                varchar(20),
     percentage            numeric(3, 2),
     CONSTRAINT PREFERS_PK PRIMARY KEY (allocation_no, symbol),
-    CONSTRAINT PREFERS_FK1 FOREIGN KEY (allocation_no) REFERENCES ALLOCATION(allocation_no),
-    CONSTRAINT PREFERS_FK2 FOREIGN KEY (symbol) REFERENCES MUTUALFUND (symbol)
+    CONSTRAINT PREFERS_FK1 FOREIGN KEY (allocation_no) REFERENCES ALLOCATION (allocation_no),
+    CONSTRAINT PREFERS_FK2 FOREIGN KEY (symbol) REFERENCES MUTUAL_FUND (symbol)
 );
 
 CREATE TABLE OWNS
@@ -66,7 +65,7 @@ CREATE TABLE OWNS
     shares                int,
     CONSTRAINT OWNS_PK PRIMARY KEY (login, symbol),
     CONSTRAINT OWNS_FK1 FOREIGN KEY (login) REFERENCES CUSTOMER (login),
-    CONSTRAINT OWNS_FK2 FOREIGN KEY (symbol) REFERENCES MUTUALFUND (symbol)
+    CONSTRAINT OWNS_FK2 FOREIGN KEY (symbol) REFERENCES MUTUAL_FUND (symbol)
 );
 
 
@@ -95,12 +94,12 @@ CREATE TABLE TRXLOG(
     amount decimal(10,2),
     CONSTRAINT pk_trxlog PRIMARY KEY (trx_id),
     CONSTRAINT fk_trxlog_login FOREIGN KEY (login) REFERENCES CUSTOMER(login),
-    CONSTRAINT fk_trxlog_symbol FOREIGN KEY (symbol) REFERENCES MUTUALFUND(symbol)
+    CONSTRAINT fk_trxlog_symbol FOREIGN KEY (symbol) REFERENCES MUTUAL_FUND(symbol)
 
 );
 
 /* Pseudo Date Information */
-
+DROP TABLE IF EXISTS MUTUAL_DATE CASCADE;
 CREATE TABLE MUTUAL_DATE(
     p_date date,
     CONSTRAINT pk_mutualdate PRIMARY KEY (p_date)
