@@ -1,5 +1,5 @@
 /* Question 2*/
-CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(50), arg2 varchar(50))
+CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(30), arg2 varchar(30))
     RETURNS TEXT
     AS $$
     DECLARE
