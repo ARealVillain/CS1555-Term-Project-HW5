@@ -72,10 +72,33 @@ CREATE TABLE OWNS
 
 
 /* Administrators Information */
-
+DROP TABLE IF EXISTS ADMINISTRATOR CASCADE;
+CREATE TABLE ADMINISTRATOR(
+    login varchar(10),
+    name varchar(20),
+    email varchar(30),
+    address varchar(30),
+    password varchar(10),
+    CONSTRAINT pk_administrator PRIMARY KEY (login),
+    CONSTRAINT unique_email UNIQUE (email)
+);
 
 /* Transactions History Information */
+DROP TABLE IF EXISTS TRXLOG CASCADE;
+CREATE TABLE TRXLOG(
+    trx_id serial,
+    login varchar(10),
+    symbol varchar(20),
+    t_date date,
+    action varchar(10),
+    num_shares int,
+    price decimal(10,2),
+    amount decimal(10,2),
+    CONSTRAINT pk_trxlog PRIMARY KEY (trx_id),
+    CONSTRAINT fk_trxlog_login FOREIGN KEY (login) REFERENCES CUSTOMER(login),
+    CONSTRAINT fk_trxlog_symbol FOREIGN KEY (symbol) REFERENCES MUTUALFUND(symbol)
 
+);
 
 /* Pseudo Date Information */
 
