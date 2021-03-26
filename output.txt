@@ -1,0 +1,26 @@
+/* Team 10 */
+/* Krutarth Patel - kkp19 */
+/* Erik Nordby - ern23 */
+/* Kyle Tissue - kjt32 */
+
+CREATE FUNCTION
+ search_mutual_funds 
+---------------------
+ [ BBS]
+(1 row)
+
+CREATE PROCEDURE
+CALL
+DROP FUNCTION
+CREATE FUNCTION
+ buy_shares 
+------------
+ f
+(1 row)
+
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER

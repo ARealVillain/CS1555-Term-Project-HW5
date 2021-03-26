@@ -1,3 +1,8 @@
+/* Team 10 */
+/* Krutarth Patel - kkp19 */
+/* Erik Nordby - ern23 */
+/* Kyle Tissue - kjt32 */
+
 /* Mutual Fund Information */
 DROP TABLE IF EXISTS MUTUAL_FUND CASCADE;
 DROP TABLE IF EXISTS CLOSING_PRICE CASCADE;
