@@ -1,4 +1,9 @@
-/* Question 2 */
+/* Team 10 */
+/* Krutarth Patel - kkp19 */
+/* Erik Nordby - ern23 */
+/* Kyle Tissue - kjt32 */
+
+/* Task/Question 2 */
 CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(30), arg2 varchar(30))
     RETURNS TEXT
     AS $$
@@ -25,7 +30,7 @@ CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(30), arg2 varchar(3
 
 SELECT SEARCH_MUTUAL_FUNDS('stock', 'bond');
 
-/*Question 3*/
+/* Task/Question 3 */
 CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amount dec(10,2))
     LANGUAGE plpgsql
     AS $$
@@ -81,7 +86,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
 CALL deposit_for_investment('mike', 100);
 
 
-/* Question 4 */
+/* Task/Question 4 */
 DROP FUNCTION buy_shares(login varchar, symb varchar, num_shares integer);
 CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_shares int)
     RETURNS BOOLEAN
@@ -143,7 +148,7 @@ CREATE OR REPLACE VIEW costView AS
     ORDER BY closeDATE DESC
     FETCH NEXT 2 ROWS ONLY;*/
 
-/* Question 5 */
+/* Task/Question 5 */
 
 CREATE OR REPLACE FUNCTION buy_on_date()
     RETURNS TRIGGER AS
@@ -187,7 +192,7 @@ CREATE TRIGGER buy_on_date
     AFTER UPDATE ON mutual_date
     EXECUTE FUNCTION buy_on_date();
 
-/* Question 6 */
+/* Task/Question 6 */
 
 CREATE OR REPLACE FUNCTION buy_on_price()
     RETURNS TRIGGER AS
