@@ -166,7 +166,10 @@ CREATE OR REPLACE FUNCTION buy_on_date()
     $$
     LANGUAGE 'plpgsql';
 
-/* CODE FOR FIRING TRIGGER???????? */
+DROP TRIGGER IF EXISTS buy_on_date ON mutual_date;
+CREATE TRIGGER buy_on_date
+    AFTER UPDATE ON mutual_date
+    EXECUTE FUNCTION buy_on_date();
 
 /* Question 6 */
 
@@ -214,4 +217,7 @@ CREATE OR REPLACE FUNCTION buy_on_price()
     $$
     LANGUAGE 'plpgsql';
 
-/* CODE FOR FIRING TRIGGER???????? */
+DROP TRIGGER IF EXISTS buy_on_price ON closing_price;
+CREATE TRIGGER buy_on_price
+    AFTER UPDATE ON closing_price
+    EXECUTE FUNCTION buy_on_price();
