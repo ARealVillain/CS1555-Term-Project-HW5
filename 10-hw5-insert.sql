@@ -1,8 +1,3 @@
-/* Team 10 */
-/* Krutarth Patel - kkp19 */
-/* Erik Nordby - ern23 */
-/* Kyle Tissue - kjt32 */
-
 INSERT INTO ADMINISTRATOR (login,name,email,address,password) VALUES ('admin', 'Administrator', 'admin@betterfuture.com' ,'5th Ave, Pitt', 'root');
 
 INSERT INTO CUSTOMER (login,name,email,address,password,balance) VALUES ('mike', 'Mike Costa', 'mike@betterfuture.com', '1st street', 'pwd', 750.00);
