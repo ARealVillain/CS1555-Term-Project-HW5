@@ -50,17 +50,23 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
             /*get the symbol percent and price that correspond to the current allocation_no*/
             cur_symbol := cur_allocation.symbol;
             cur_percent := cur_allocation.percentage;
-            cur_price := (select price from closing_price where symbol=cur_symbol order by p_date limit 1);
+            cur_price := (select price from closing_price where symbol=cur_symbol order by p_date desc limit 1);
             /* calculate the amount of shares that should be purchased*/
-            raise notice 'symbol: %', cur_symbol;
-            raise notice 'percent: %', cur_percent;
-            raise notice 'price: %', cur_price;
             shares_to_buy:=FLOOR(cur_percent*amount/cur_price);
-            raise notice 'Value: %', shares_to_buy;
             /* use the buy_shares function to purchase the shares*/
-            PERFORM buy_shares(cur_login,cur_symbol,shares_to_buy);
-            /*sum the amount spent*/
-            cur_amount = cur_amount +shares_to_buy*cur_price;
+            if shares_to_buy >0 then
+                INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES ((SELECT MAX(trx_id) FROM trxlog)+1, cur_login, cur_symbol, CURRENT_DATE, 'deposit',  shares_to_buy, cur_price, shares_to_buy*cur_price);
+                perform shares from owns where login = cur_login and symbol = cur_symbol;
+                if found then
+                    update owns
+                    set shares = shares + shares_to_buy
+                    where login=cur_login and symbol=cur_symbol;
+                else
+                    INSERT INTO OWNS(login,symbol,shares) VALUES(cur_login,cur_symbol,shares_to_buy);
+                end if;
+                /*sum the amount spent*/
+                cur_amount = cur_amount +shares_to_buy*cur_price;
+            end if;
         END LOOP;
         amount:=amount-cur_amount;
         close preference_cursor;
@@ -68,10 +74,11 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
         UPDATE customer
         SET balance = balance + amount
         WHERE login = cur_login;
+
         commit;
     END;
     $$;
-CALL deposit_for_investment('mike', 50);
+CALL deposit_for_investment('mike', 100);
 
 
 /* Question 4 */
@@ -107,6 +114,15 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
     END IF;
 
     INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (last_trx+1, log, symb, CURRENT_DATE, 'buy',  numb_shares, shares_val, new_buyer_cap);
+    /* updates the owns table to list the newly purchased shares*/
+    perform shares from owns where login = log and symbol = symb;
+    if found then
+        update owns
+        set shares = shares + numb_shares
+        where login=log and symbol=symb;
+    else
+        INSERT INTO OWNS(login,symbol,shares) VALUES(log,symb,numb_shares);
+    end if;
     RETURN TRUE;
 
     END;
