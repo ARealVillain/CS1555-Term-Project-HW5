@@ -26,6 +26,52 @@ CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(30), arg2 varchar(3
 SELECT SEARCH_MUTUAL_FUNDS('stock', 'bond');
 
 /*Question 3*/
+CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amount dec(10,2))
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        cur_amount int := 0;
+        shares_to_buy int;
+        cur_percent dec(3,2);
+        cur_symbol varchar(20);
+        cur_price decimal(10,2);
+        cur_allocation record;
+        /*query to determine allocation number that has the same login as the parameter with max date*/
+        allocation_number int := (select allocation_no from allocation where login=cur_login order by P_DATE desc limit 1);
+        preference_cursor CURSOR FOR SELECT allocation_no,symbol,percentage FROM PREFERS WHERE allocation_no=allocation_number;
+    BEGIN
+        OPEN preference_cursor;
+        /* loops through the cursor that has stored every allocation_no that matches the login given*/
+        LOOP
+            FETCH preference_cursor INTO cur_allocation;
+            if not found then
+                exit;
+            end if;
+            /*get the symbol percent and price that correspond to the current allocation_no*/
+            cur_symbol := cur_allocation.symbol;
+            cur_percent := cur_allocation.percentage;
+            cur_price := (select price from closing_price where symbol=cur_symbol order by p_date limit 1);
+            /* calculate the amount of shares that should be purchased*/
+            raise notice 'symbol: %', cur_symbol;
+            raise notice 'percent: %', cur_percent;
+            raise notice 'price: %', cur_price;
+            shares_to_buy:=FLOOR(cur_percent*amount/cur_price);
+            raise notice 'Value: %', shares_to_buy;
+            /* use the buy_shares function to purchase the shares*/
+            PERFORM buy_shares(cur_login,cur_symbol,shares_to_buy);
+            /*sum the amount spent*/
+            cur_amount = cur_amount +shares_to_buy*cur_price;
+        END LOOP;
+        amount:=amount-cur_amount;
+        close preference_cursor;
+        /* adds the remaining deposit to the customers balance*/
+        UPDATE customer
+        SET balance = balance + amount
+        WHERE login = cur_login;
+        commit;
+    END;
+    $$;
+CALL deposit_for_investment('mike', 50);
 
 
 /* Question 4 */
