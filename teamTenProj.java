@@ -9,14 +9,11 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "urPassword");
+        props.setProperty("password", "urPwd");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
-        String query1 =
-                "SELECT login FROM public.owns";
-        ResultSet res1 = st.executeQuery(query1);
-        System.out.println(res1);
+        
 
         Scanner scan = new Scanner(System.in);
         System.out.println("Are you an admin or a customer?");
@@ -28,6 +25,39 @@ public class teamTenProj {
         while(!userType.equals("quit")) {
             System.out.println("------------------------------------------------------------------");
             if(userType.equals("admin")) {
+                //Login... should probably be moved to a function
+                Boolean loggedIn = false;
+                while(loggedIn == false){
+                    System.out.println("Please login to continue: ");
+                    System.out.println("What is your user name?");
+                    String userName = scan.nextLine();
+                    System.out.println("What is your password?");
+                    String password = scan.nextLine();
+
+                    //create a query
+                    String loginQuery = "SELECT * FROM ADMINISTRATOR WHERE login=? and password=?";
+                    PreparedStatement loginPs = conn.prepareStatement(loginQuery);
+                    loginPs.setString(1, userName);
+                    loginPs.setString(2, password);
+
+                    //execute a query
+                    ResultSet res1 = loginPs.executeQuery();
+
+                    //Assess
+                    String rid = null;
+                    while (res1.next()) {
+                        rid = res1.getString("login");
+                    }
+                    
+                    if (rid == null){
+                        System.out.println("\nSorry thats a bad login!\n");
+                    }
+                    else{
+                        loggedIn = true;
+                    }
+                }
+
+
                 boolean adminFlag = true;
                 while(adminFlag) {
                     printAdminMenu();
@@ -60,6 +90,41 @@ public class teamTenProj {
                 }
             } else if(userType.equals("customer")) {
                 boolean custFlag = true;
+
+                //Login... should probably be moved to a function
+                Boolean loggedIn = false;
+                String userName = "";
+                String password = "";
+                while(loggedIn == false){
+                    System.out.println("Please login to continue: ");
+                    System.out.println("What is your user name?");
+                    userName = scan.nextLine();
+                    System.out.println("What is your password?");
+                    password = scan.nextLine();
+
+                    //create a query
+                    String loginQuery = "SELECT * FROM CUSTOMER WHERE login=? and password=?";
+                    PreparedStatement loginPs = conn.prepareStatement(loginQuery);
+                    loginPs.setString(1, userName);
+                    loginPs.setString(2, password);
+
+                    //execute a query
+                    ResultSet res1 = loginPs.executeQuery();
+
+                    //Assess
+                    String rid = null;
+                    while (res1.next()) {
+                        rid = res1.getString("login");
+                    }
+                    
+                    if (rid == null){
+                        System.out.println("\nSorry thats a bad login!\n");
+                    }
+                    else{
+                        loggedIn = true;
+                    }
+                }
+
                 while(custFlag) {
                     //might have to ask for customer information here since it is not asked for in functions but needed for them
                     printCustomerMenu();
@@ -67,7 +132,7 @@ public class teamTenProj {
                     userOp = scan.nextLine();
                     System.out.println("------------------------------------------------------------------");
                     if(userOp.equals("1")) {
-                        showBalance();
+                        showBalance(userName, conn);
                     } else if(userOp.equals("2")) {
                         showMFNames();
                     } else if(userOp.equals("3")) {
@@ -166,9 +231,10 @@ public class teamTenProj {
         return;
     }
 
-    private static void searchMutualFund() {
+    private static void searchMutualFund(Connection conn) {
         System.out.println("Function to search for a mutual fund");
         System.out.println("------------------------------------------------------------------");
+
         return;
     }
 
@@ -184,9 +250,42 @@ public class teamTenProj {
         return;
     }
 
-    private static void showBalance() {
+    private static void showBalance(String userName, Connection conn) throws SQLException {
         System.out.println("Function to show customer balance and total number of shares");
         System.out.println("------------------------------------------------------------------");
+
+        //create a query
+        String balanceQuery = "SELECT name, balance FROM CUSTOMER WHERE login=?";
+        PreparedStatement balancePs = conn.prepareStatement(balanceQuery);
+        balancePs.setString(1, userName);
+
+        //execute a query
+        ResultSet balanceRes = balancePs.executeQuery();
+
+        //Assess
+        String rBalance = null;
+        String rName = "";
+        while (balanceRes.next()) {
+            rName = balanceRes.getString("name");
+            rBalance = balanceRes.getString("balance");
+        }
+
+        //create a query
+        String sharesQuery = "SELECT shares FROM owns WHERE login=?";
+        PreparedStatement sharesPs = conn.prepareStatement(sharesQuery);
+        sharesPs.setString(1, userName);
+
+        //execute a query
+        ResultSet sharesRes = sharesPs.executeQuery();
+
+        //Assumption: Total number of shares means the total number of all shares
+        int rShares = 0;
+        while (sharesRes.next()) {
+            rShares += Integer.parseInt(sharesRes.getString("shares"));
+        }
+
+        System.out.println(rName + " has a total balance of: " + rBalance + " and has this many shares total: " + rShares);
+
         return;
     }
 
