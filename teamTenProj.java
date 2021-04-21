@@ -69,9 +69,9 @@ public class teamTenProj {
                     } else if(userOp.equals("2")) {
                         addCustomer(conn, scan);
                     } else if(userOp.equals("3")) {
-                        addMutualFund();
+                        addMutualFund(conn, scan);
                     } else if(userOp.equals("4")) {
-                        updateShares();
+                        updateShares(conn, scan);
                     } else if(userOp.equals("5")) {
                         topK();
                     } else if(userOp.equals("6")) {
@@ -423,15 +423,92 @@ public class teamTenProj {
         return;
     }
 
-    private static void updateShares() {
+    private static void updateShares(Connection conn, Scanner scan) {
         System.out.println("Function to update share quotes for a day");
         System.out.println("------------------------------------------------------------------");
+        System.out.println("Please enter the date when the mutual fund was created in the format <YYYY-MM-DD>");
+        /*I think we have to format this date input to work with the query but not sure*/
+        String cDate = scan.nextLine();
+        if(cDate.length() > 30) {
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the file name where the mutual fund symbol and prices are located");
+        String fileName = scan.nextLine();
+        Scanner fread = new Scanner(new File(fileName));
+        while(fread.hasNextLine()) {
+            String line = fread.nextLine();
+            String[] lineSplit = line.split(",");
+            String sym = lineSplit[0];
+            if(sym.length() > 20) {
+                System.out.println("Sorry that is too long");
+                return;
+            }
+            float price = Float.parseFloat(lineSplit[1]);
+            String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?, ?)";
+            PreparedStatement cpStat = conn.prepareStatement(addClosingPrice);
+            cpStat.setString(1, sym);
+            cpStat.setFloat(2, price);
+            cpStat.setString(3, cDate);
+            cpStat.execute();
+        }
         return;
     }
 
-    private static void addMutualFund() {
+    private static void addMutualFund(Connection conn, Scanner scan) {
         System.out.println("Function to add a mutual fund");
         System.out.println("------------------------------------------------------------------");
+        //Get info
+        System.out.println("Please enter the symbol for the mutual fund");
+        String sym = scan.nextLine();
+        if(sym.length() > 20) {
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the column name for the mutual fund");
+        String cName = scan.nextLine();
+        System.out.println("Please enter the name of the mutual fund");
+        String name = scan.nextLine();
+        if(name.length() > 30) {
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the description of the mutual fund");
+        String desc = scan.nextLine();
+        if(desc.length() > 30) {
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the category of the mutual fund");
+        String cat = scan.nextLine();
+        if(cat.length() > 10) {
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the date when the mutual fund was created in the format <YYYY-MM-DD>");
+        /*I think we have to format this date input to work with the query but not sure*/
+        String cDate = scan.nextLine();
+        if(cDate.length() > 30) {
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        //Insert into Mutual Fund table
+        String addMF = "INSERT INTO MUTUALFUND (symbol,name,description,category,c_date) VALUES (?, ?, ?, ?, ?)";
+        PreparedStatement pStat = conn.prepareStatement(addMF);
+        pStat.setString(1, sym);
+        pStat.setString(2, name);
+        pStat.setString(3, desc);
+        pStat.setString(4, cat);
+        pStat.setString(5, cDate);
+        pStat.execute();
+        //Since new mutual fund add to the closing price table??
+        float price = 0;
+        String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?, ?)";
+        PreparedStatement cpStat = conn.prepareStatement(addClosingPrice);
+        cpStat.setString(1, sym);
+        cpStat.setFloat(2, price);
+        cpStat.setString(3, cDate);
+        cpStat.execute();
         return;
     }
 
