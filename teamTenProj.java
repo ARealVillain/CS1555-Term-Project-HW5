@@ -9,7 +9,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "urPwd");
+        props.setProperty("password", "102Camelot");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
@@ -134,7 +134,7 @@ public class teamTenProj {
                     if(userOp.equals("1")) {
                         showBalance(userName, conn);
                     } else if(userOp.equals("2")) {
-                        showMFNames();
+                        showMFNames(conn);
                     } else if(userOp.equals("3")) {
                         showMFPrices();
                     } else if(userOp.equals("4")) {
@@ -231,7 +231,7 @@ public class teamTenProj {
         return;
     }
 
-    private static void searchMutualFund(Connection conn) {
+    private static void searchMutualFund() {
         System.out.println("Function to search for a mutual fund");
         System.out.println("------------------------------------------------------------------");
 
@@ -243,13 +243,29 @@ public class teamTenProj {
         System.out.println("------------------------------------------------------------------");
         return;
     }
-
-    private static void showMFNames() {
+    //Assumptions: Show all MFNames, not just the ones for the user
+    private static void showMFNames(Connection conn) throws SQLException {
         System.out.println("Function to show mutual funds sorted by names");
         System.out.println("------------------------------------------------------------------");
+
+        //create a query
+        String fundNamesQuery = "SELECT name FROM MUTUAL_FUND ORDER BY name ASC";
+        PreparedStatement fundNamesPs = conn.prepareStatement(fundNamesQuery);
+
+        //execute a query
+        ResultSet fundNamesRes = fundNamesPs.executeQuery();
+
+        
+        System.out.println("Here are all of the fund names: \n");
+        while (fundNamesRes.next()) {
+            //Print names
+            System.out.println(fundNamesRes.getString("name"));
+        }
+
         return;
     }
 
+    //Assumptions: Total shares means the total of all shares
     private static void showBalance(String userName, Connection conn) throws SQLException {
         System.out.println("Function to show customer balance and total number of shares");
         System.out.println("------------------------------------------------------------------");
