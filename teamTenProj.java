@@ -76,7 +76,7 @@ public class teamTenProj {
                     } else if(userOp.equals("5")) {
                         topK(conn, scan);
                     } else if(userOp.equals("6")) {
-                        rankInvestors();
+                        rankInvestors(conn, scan);
                     } else if(userOp.equals("7")) {
                         updateDate();
                     } else if(userOp.equals("8")) {
@@ -430,9 +430,25 @@ public class teamTenProj {
         return;
     }
 
-    private static void rankInvestors() {
+    private static void rankInvestors(Connection conn, Scanner scan) throws SQLException {
         System.out.println("Function to rank all the investors");
         System.out.println("------------------------------------------------------------------");
+
+        PreparedStatement rankInvestors = conn.prepareStatement("select * from investor_rank");
+        ResultSet rankRes = rankInvestors.executeQuery();
+
+        //Assumption: Total number of shares means the total number of all shares
+        String investor = "";
+        String total_cash = "";
+
+        System.out.println("Here's the value of all of the investors");
+        while (rankRes.next()) {
+            investor = rankRes.getString("login");
+            total_cash = rankRes.getString("sum");
+            System.out.println(investor + " "+ total_cash);
+        }
+
+        System.out.println();
         return;
     }
 

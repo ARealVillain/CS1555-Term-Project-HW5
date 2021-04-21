@@ -410,25 +410,25 @@ SELECT SELL_SHARES( 'mike', 'MM', 1);
     in the result are the top k categories based on the number of shares owned by customers
  */
 
-CREATE OR REPLACE FUNCTION get_top_k(int k)
-    RETURNS TABLE (category, number_shares) AS $$ DECLARE
-    BEGIN
 
-    /*Get the most recent day's value for the stock*/
-    return( SELECT category, sum(shares)
-            FROM mutual_fund JOIN owns o on mutual_fund.symbol = o.symbol
-            GROUP BY category
-            ORDER BY sum(shares) DESC;
+/* join login to closing price where we have retrived the latest closing price for all of the stocks*/
+CREATE VIEW INVESTOR_RANK AS
+    SELECT login, sum(shares*price) FROM OWNS JOIN (
+        SELECT CLOSING_PRICE.symbol, price FROM CLOSING_PRICE JOIN (
+            SELECT symbol, MAX(p_date) as p_date from closing_price
+            GROUP BY symbol)
+            as MAX_DATE on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol)
+        as LATEST_PRICE ON OWNS.symbol = LATEST_PRICE.symbol
+    GROUP BY login
+    ORDER BY sum(shares*price) DESC;
 
-            FETCH FIRST k ROWS ONLY);
-
-
-    END;
-
-    $$ LANGUAGE plpgsql;
+SELECT * from INVESTOR_RANK
 
 
+/*This gets the latest price for all of the different stocks... could be good to use as a view?*/
+SELECT CLOSING_PRICE.symbol as symbol, price FROM CLOSING_PRICE JOIN (
+    SELECT symbol, MAX(p_date) as p_date from closing_price
+    GROUP BY symbol) as MAX_DATE
+    on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
 
-
-INSERT INTO OWNS (login, symbol, shares) VALUES ('mike', 'LTB', 10);
-INSERT INTO OWNS (login, symbol, shares) VALUES ('mike', 'STB', 20);
+SELECT * FROM rank_investors()
