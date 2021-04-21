@@ -1,10 +1,11 @@
 import java.util.*;
-
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 
 public class teamTenProj {
-    public static void main(String args[]) throws SQLException, ClassNotFoundException {
+    public static void main(String args[]) throws Exception {
 
         //Set up connection with SQL
         Class.forName("org.postgresql.Driver");
@@ -423,7 +424,7 @@ public class teamTenProj {
         return;
     }
 
-    private static void updateShares(Connection conn, Scanner scan) {
+    private static void updateShares(Connection conn, Scanner scan) throws Exception {
         System.out.println("Function to update share quotes for a day");
         System.out.println("------------------------------------------------------------------");
         System.out.println("Please enter the date when the mutual fund was created in the format <YYYY-MM-DD>");
@@ -455,7 +456,7 @@ public class teamTenProj {
         return;
     }
 
-    private static void addMutualFund(Connection conn, Scanner scan) {
+    private static void addMutualFund(Connection conn, Scanner scan) throws SQLException {
         System.out.println("Function to add a mutual fund");
         System.out.println("------------------------------------------------------------------");
         //Get info
