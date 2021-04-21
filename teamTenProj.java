@@ -12,7 +12,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "URPASSWORD");
+        props.setProperty("password", "102Camelot");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
@@ -74,7 +74,7 @@ public class teamTenProj {
                     } else if(userOp.equals("4")) {
                         updateShares(conn, scan);
                     } else if(userOp.equals("5")) {
-                        topK();
+                        topK(conn, scan);
                     } else if(userOp.equals("6")) {
                         rankInvestors();
                     } else if(userOp.equals("7")) {
@@ -436,9 +436,30 @@ public class teamTenProj {
         return;
     }
 
-    private static void topK() {
+    private static void topK(Connection conn, Scanner scan) throws SQLException {
         System.out.println("Function to show top-k highest volume categories");
         System.out.println("------------------------------------------------------------------");
+        System.out.println("How many categories would you like to see?");
+        int k = Integer.parseInt(scan.nextLine());
+        String kQuery = "SELECT category, sum(shares) as shares FROM mutual_fund JOIN owns o on mutual_fund.symbol = o.symbol GROUP BY category ORDER BY sum(shares) DESC FETCH FIRST ? ROWS ONLY";
+        
+        PreparedStatement kPs = conn.prepareStatement(kQuery);
+        kPs.setInt(1, k);
+
+        //execute a query
+        ResultSet kRes = kPs.executeQuery();
+
+        //Assumption: Total number of shares means the total number of all shares
+        String cat = "";
+        String number = "";
+        while (kRes.next()) {
+            cat = kRes.getString("category");
+            number = kRes.getString("shares");
+            System.out.println(cat + " "+ number);
+        }
+
+        
+
         return;
     }
 

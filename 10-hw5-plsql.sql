@@ -358,7 +358,7 @@ CREATE TRIGGER price_initialization
         WHEN (NEW.action = 'sell')
     EXECUTE FUNCTION sell_rebalance();
 
-
+/*Sell shares*/
 CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_shares int)
     RETURNS BOOLEAN
     AS $$
@@ -403,3 +403,32 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
     $$ LANGUAGE plpgsql;
 
 SELECT SELL_SHARES( 'mike', 'MM', 1);
+
+
+/*Helper function to help with getting top-k for Admin #5
+  Ask the user to supply the k value, and display the corresponding categories. The categories
+    in the result are the top k categories based on the number of shares owned by customers
+ */
+
+CREATE OR REPLACE FUNCTION get_top_k(int k)
+    RETURNS TABLE (category, number_shares) AS $$ DECLARE
+    BEGIN
+
+    /*Get the most recent day's value for the stock*/
+    return( SELECT category, sum(shares)
+            FROM mutual_fund JOIN owns o on mutual_fund.symbol = o.symbol
+            GROUP BY category
+            ORDER BY sum(shares) DESC;
+
+            FETCH FIRST k ROWS ONLY);
+
+
+    END;
+
+    $$ LANGUAGE plpgsql;
+
+
+
+
+INSERT INTO OWNS (login, symbol, shares) VALUES ('mike', 'LTB', 10);
+INSERT INTO OWNS (login, symbol, shares) VALUES ('mike', 'STB', 20);
