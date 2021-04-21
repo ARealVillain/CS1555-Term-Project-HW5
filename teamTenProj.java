@@ -40,6 +40,7 @@ public class teamTenProj {
                         userType = "quit";
                     } else {
                         System.out.println("That is not a valid option");
+                        System.out.println("------------------------------------------------------------------");
                     }
                 }
             } else if(userType.equals("customer")) {
@@ -81,6 +82,7 @@ public class teamTenProj {
                         userType = "quit";
                     } else {
                         System.out.println("That is not a valid option");
+                        System.out.println("------------------------------------------------------------------");
                     }
                 }
             } else {
