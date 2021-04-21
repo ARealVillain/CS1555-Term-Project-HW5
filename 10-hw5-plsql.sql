@@ -308,9 +308,7 @@ CREATE OR REPLACE FUNCTION price_initialization()
             FROM closing_price
             ORDER BY p_date DESC, price ASC
             FETCH FIRST ROW ONLY);
-        raise notice 'Value: %', lowestPrice;
         INSERT INTO closing_price(symbol, price, p_date) VALUES(NEW.symbol, lowestPrice, current_date);
-        raise notice 'Value: %', lowestPrice;
         RETURN NULL;
     END;
     $$

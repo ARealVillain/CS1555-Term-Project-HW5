@@ -1,4 +1,5 @@
 import java.util.*;
+
 import java.sql.*;
 import java.text.SimpleDateFormat;
 
@@ -10,7 +11,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "urPwd");
+        props.setProperty("password", "URPASSWORD");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
@@ -64,9 +65,9 @@ public class teamTenProj {
                     userOp = scan.nextLine();
                     System.out.println("------------------------------------------------------------------");
                     if(userOp.equals("1")) {
-                        eraseDatabase();
+                        eraseDatabase(conn, scan);
                     } else if(userOp.equals("2")) {
-                        addCustomer();
+                        addCustomer(conn, scan);
                     } else if(userOp.equals("3")) {
                         addMutualFund();
                     } else if(userOp.equals("4")) {
@@ -95,6 +96,7 @@ public class teamTenProj {
                 String userName = "";
                 String password = "";
                 while(loggedIn == false){
+
                     System.out.println("Please login to continue: ");
                     System.out.println("What is your user name?");
                     userName = scan.nextLine();
@@ -267,7 +269,7 @@ public class teamTenProj {
         return;
     }
 
-    //I think deposit for investment needs to be tweake---- NEEDS FIXED
+    //I think deposit for investment needs to be tweaked---- NEEDS FIXED
     private static void depositAmount(String userName, Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to deposit amount for investment");
         System.out.println("------------------------------------------------------------------");
@@ -433,15 +435,83 @@ public class teamTenProj {
         return;
     }
 
-    private static void addCustomer() {
+    private static void addCustomer(Connection conn, Scanner scan) throws SQLException {
         System.out.println("Function to add a customer");
         System.out.println("------------------------------------------------------------------");
+        //Get info and check if too long
+        System.out.println("Please enter the login for the new user");
+        String login = scan.nextLine();
+        if(login.length() > 10){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the name for the new user");
+        String name = scan.nextLine();
+        if(name.length() > 20){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the email for the new user");
+        String email = scan.nextLine();
+        if(email.length() > 30){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the password for the new user");
+        String password = scan.nextLine();
+        if(password.length() > 10){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter the address for the new user");
+        String address = scan.nextLine();
+        if(address.length() > 30){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+
+        System.out.println("Would you like to set an initial balance? (y/n)");
+        Boolean setBalance = (scan.nextLine().equals("y"));
+        if(setBalance){
+            System.out.println("How much would you like to initialize the balance to?");
+            float balance = Float.parseFloat(scan.nextLine());
+            String addCust = "INSERT INTO CUSTOMER (login,name,email,address,password,balance) VALUES (?, ?, ?, ?, ?, ?);";
+            PreparedStatement custPs = conn.prepareStatement(addCust);
+            custPs.setString(1, login);
+            custPs.setString(2, name);
+            custPs.setString(3, email);
+            custPs.setString(4, address);
+            custPs.setString(5, password);
+            custPs.setFloat(6, balance);
+            custPs.execute();
+        }
+        else{
+            String addCust = "INSERT INTO CUSTOMER (login,name,email,address,password) VALUES (?, ?, ?, ?, ?);";
+            PreparedStatement custPs = conn.prepareStatement(addCust);
+            custPs.setString(1, login);
+            custPs.setString(2, name);
+            custPs.setString(3, email);
+            custPs.setString(4, address);
+            custPs.setString(5, password);
+            custPs.execute();
+        }
+        
+        
         return;
     }
 
-    private static void eraseDatabase() {
+    private static void eraseDatabase(Connection conn, Scanner scan) throws SQLException {
         System.out.println("Function to erase the database");
         System.out.println("------------------------------------------------------------------");
+        System.out.println("Are you sure? This cannot be undone (y/n)");
+        Boolean sure = (scan.nextLine().equals("y"));
+        if(!sure)
+            return;
+
+        String truncate = "TRUNCATE ADMINISTRATOR CASCADE; TRUNCATE ALLOCATION CASCADE; TRUNCATE CLOSING_PRICE CASCADE; TRUNCATE CUSTOMER CASCADE; TRUNCATE MUTUAL_DATE CASCADE; TRUNCATE MUTUAL_FUND CASCADE; TRUNCATE OWNS CASCADE; TRUNCATE PREFERS CASCADE; TRUNCATE TRXLOG CASCADE;";
+        PreparedStatement truncPs = conn.prepareStatement(truncate);
+        truncPs.execute();
+
         return;
     }
 

@@ -39,7 +39,7 @@ CREATE TABLE CUSTOMER
     email         varchar(30),
     address       varchar(10),
     password      varchar(50),
-    balance       numeric(10, 2),
+    balance       numeric(10, 2) DEFAULT 0,
     CONSTRAINT CUSTOMER_PK PRIMARY KEY (login),
     CONSTRAINT EMAIL_UQ UNIQUE (email)
 );
