@@ -21,7 +21,7 @@ CREATE TABLE CLOSING_PRICE(
     price decimal(10, 2),
     p_date date,
     CONSTRAINT pk_closingprice PRIMARY KEY (symbol, p_date),
-    CONSTRAINT fk_closingprice FOREIGN KEY (symbol) REFERENCES MUTUAL_FUND(symbol)
+    CONSTRAINT fk_closingprice FOREIGN KEY (symbol) REFERENCES MUTUAL_FUND(symbol) DEFERRABLE INITIALLY DEFERRED
 );
 
 /* Customers Information */

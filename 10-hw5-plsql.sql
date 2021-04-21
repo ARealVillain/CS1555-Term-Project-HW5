@@ -104,11 +104,10 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
             ORDER BY P_DATE DESC
             FETCH FIRST ROW ONLY);
 
-    total_shares_val := shares_val*numb_shares;
+    total_shares_val := shares_val * numb_shares;
 
-    buyer_cap := (SELECT AMOUNT FROM TRXLOG
+    buyer_cap := (SELECT BALANCE FROM CUSTOMER
             WHERE login LIKE log
-            ORDER BY trx_id DESC
             FETCH FIRST ROW ONLY);
 
     last_trx := (SELECT MAX(trx_id) FROM trxlog);
@@ -118,7 +117,12 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
     IF new_buyer_cap < 0 THEN return False;
     END IF;
 
-    INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (last_trx+1, log, symb, CURRENT_DATE, 'buy',  numb_shares, shares_val, new_buyer_cap);
+    UPDATE CUSTOMER
+        SET balance = balance - total_shares_val
+        WHERE login= log;
+
+    INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (last_trx+1, log, symb, CURRENT_DATE, 'buy',  numb_shares, shares_val, total_shares_val);
+
     /* updates the owns table to list the newly purchased shares*/
     perform shares from owns where login = log and symbol = symb;
     if found then
@@ -135,18 +139,6 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
 
 
 SELECT BUY_SHARES('mike', 'MM', 5);
-
-/*CREATE OR REPLACE VIEW doView AS
-    SELECT owns.login, symbol, c.balance, m.p_date
-    FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
-    ORDER BY shares ASC
-    FETCH FIRST ROW ONLY;
-
-CREATE OR REPLACE VIEW costView AS
-    SELECT price, div(d.balance, price) AS purchasable, d.login, d.symbol, d.balance, d.p_date AS mutDATE, closing_price.p_date AS closeDATE
-    FROM closing_price JOIN doview d on closing_price.symbol = d.symbol
-    ORDER BY closeDATE DESC
-    FETCH NEXT 2 ROWS ONLY;*/
 
 /* Task/Question 5 */
 
@@ -193,7 +185,6 @@ CREATE TRIGGER buy_on_date
     EXECUTE FUNCTION buy_on_date();
 
 /* Task/Question 6 */
-
 CREATE OR REPLACE FUNCTION buy_on_price()
     RETURNS TRIGGER AS
     $$
@@ -233,7 +224,6 @@ CREATE OR REPLACE FUNCTION buy_on_price()
 
         IF prevPrice != currPrice THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
         END IF;
-
     END;
     $$
     LANGUAGE 'plpgsql';
@@ -242,3 +232,64 @@ DROP TRIGGER IF EXISTS buy_on_price ON closing_price;
 CREATE TRIGGER buy_on_price
     AFTER UPDATE ON closing_price
     EXECUTE FUNCTION buy_on_price();
+
+/*For proj- price intilization*/
+CREATE OR REPLACE FUNCTION price_initialization()
+    RETURNS TRIGGER AS
+    $$
+    DECLARE
+    lowestPrice decimal(10, 2);
+    BEGIN
+        lowestPrice := (SELECT price
+            FROM closing_price
+            ORDER BY p_date DESC, price ASC
+            FETCH FIRST ROW ONLY);
+        raise notice 'Value: %', lowestPrice;
+        INSERT INTO closing_price(symbol, price, p_date) VALUES(NEW.symbol, lowestPrice, current_date);
+        raise notice 'Value: %', lowestPrice;
+        RETURN NULL;
+    END;
+    $$
+    LANGUAGE 'plpgsql';
+
+DROP TRIGGER IF EXISTS price_initialization ON mutual_fund;
+CREATE TRIGGER price_initialization
+    AFTER INSERT ON mutual_fund
+    FOR EACH ROW
+    EXECUTE FUNCTION price_initialization();
+
+
+/*Sell rebalance*/
+DROP FUNCTION sell_rebalance();
+CREATE OR REPLACE FUNCTION sell_rebalance()
+    RETURNS TRIGGER AS
+    $$
+    DECLARE
+    shares_val decimal(10, 2);
+    total_shares_val decimal(10, 2);
+
+    BEGIN
+    /*Get the most recent day's value for the stock*/
+    shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE NEW.symbol
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+    total_shares_val := shares_val*NEW.num_shares;
+
+    /* updates the customer table*/
+    UPDATE CUSTOMER
+        SET balance = balance + total_shares_val
+        WHERE login=NEW.login;
+    END;
+
+    $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS sell_rebalance ON trxlog;
+CREATE TRIGGER price_initialization
+    AFTER INSERT ON trxlog
+    FOR EACH ROW
+        WHEN (NEW.action = 'sell')
+    EXECUTE FUNCTION sell_rebalance();
+
+INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (18, 'mike', NULL , TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'sell',  NULL, NULL, 1000.00);
