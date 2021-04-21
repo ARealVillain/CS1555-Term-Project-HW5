@@ -107,7 +107,7 @@ INSERT INTO PREFERS (allocation_no, symbol, percentage) VALUES (2, 'GS', 0.30);
 INSERT INTO PREFERS (allocation_no, symbol, percentage) VALUES (2, 'AS', 0.30);
 INSERT INTO PREFERS (allocation_no, symbol, percentage) VALUES (2, 'IMS', 0.40);
 
-INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (1, 'mike', NULL , TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'deposit',  NULL, NULL, 1000.00);
-INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (2, 'mike', 'MM', TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'buy', 50, 10.00 , 500.00);
-INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (3, 'mike', 'RE', TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'buy', 50, 10.00, 500.00);
-INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (4, 'mike', 'MM', TO_DATE('2020-04-01', 'YYYY-MM-DD'), 'sell', 50, 15.00, 1000.00);
+INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', NULL , TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'deposit',  NULL, NULL, 1000.00);
+INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'MM', TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'buy', 50, 10.00 , 500.00);
+INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'RE', TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'buy', 50, 10.00, 500.00);
+INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'MM', TO_DATE('2020-04-01', 'YYYY-MM-DD'), 'sell', 50, 15.00, 1000.00);

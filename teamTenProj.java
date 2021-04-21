@@ -144,7 +144,7 @@ public class teamTenProj {
                     } else if(userOp.equals("6")) {
                         buyShares(userName, conn, scan);
                     } else if(userOp.equals("7")) {
-                        sellShares();
+                        sellShares(userName, conn, scan);
                     } else if(userOp.equals("8")) {
                         showROI();
                     } else if(userOp.equals("9")) {
@@ -213,9 +213,27 @@ public class teamTenProj {
         return;
     }
 
-    private static void sellShares() {
+    //Assumption: We should also update owns even though there is not 
+    private static void sellShares(String userName, Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to sell shares");
         System.out.println("------------------------------------------------------------------");
+        System.out.println("What symbol would you like to sell?");
+        String symbol = scn.nextLine();
+
+        System.out.println("What number of shares would you like to sell?");
+        int numberShares = Integer.parseInt(scn.nextLine());
+
+        CallableStatement sellShares = conn.prepareCall("{?=call sell_shares( ? , ? , ? )}");
+        sellShares.registerOutParameter(1, Types.BOOLEAN);
+        sellShares.setString(2, userName);
+        sellShares.setString(3, symbol);
+        sellShares.setInt(4, numberShares);
+        sellShares.execute();
+
+        Boolean succeeded = sellShares.getBoolean(1);
+        if(!succeeded)
+            System.out.println("Sorry something went wrong");
+        sellShares.close();
         return;
     }
 
@@ -326,7 +344,7 @@ public class teamTenProj {
         System.out.println("What date would you like to check? Please make it in the format YYYY-MM-DD");
         String date = scn.nextLine();
 
-        String fundPricesQuery = "SELECT symbol, price FROM CLOSING_PRICE WHERE p_date = TO_DATE( ? , 'YYYY-MM-DD')ORDER BY price DESC";
+        String fundPricesQuery = "SELECT symbol, price FROM CLOSING_PRICE WHERE p_date = TO_DATE( ? , 'YYYY-MM-DD') ORDER BY price DESC";
         PreparedStatement fundPricesPs = conn.prepareStatement(fundPricesQuery);
         fundPricesPs.setString(1, date);
 
@@ -428,6 +446,7 @@ public class teamTenProj {
         System.out.println("Function to update share quotes for a day");
         System.out.println("------------------------------------------------------------------");
         System.out.println("Please enter the date when the mutual fund was created in the format <YYYY-MM-DD>");
+        //Think we need to use pseudo date for this instead of having them input it2
         /*I think we have to format this date input to work with the query but not sure*/
         String cDate = scan.nextLine();
         if(cDate.length() > 30) {
@@ -446,7 +465,7 @@ public class teamTenProj {
                 return;
             }
             float price = Float.parseFloat(lineSplit[1]);
-            String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?, ?)";
+            String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?,  TO_DATE( ? , 'YYYY-MM-DD') )";
             PreparedStatement cpStat = conn.prepareStatement(addClosingPrice);
             cpStat.setString(1, sym);
             cpStat.setFloat(2, price);
@@ -493,8 +512,9 @@ public class teamTenProj {
             System.out.println("Sorry that is too long");
             return;
         }
+
         //Insert into Mutual Fund table
-        String addMF = "INSERT INTO MUTUALFUND (symbol,name,description,category,c_date) VALUES (?, ?, ?, ?, ?)";
+        String addMF = "INSERT INTO MUTUAL_FUND (symbol,name,description,category,c_date) VALUES (?, ?, ?, ?, TO_DATE( ? , 'YYYY-MM-DD'))";
         PreparedStatement pStat = conn.prepareStatement(addMF);
         pStat.setString(1, sym);
         pStat.setString(2, name);
@@ -502,14 +522,17 @@ public class teamTenProj {
         pStat.setString(4, cat);
         pStat.setString(5, cDate);
         pStat.execute();
-        //Since new mutual fund add to the closing price table??
+
+        //Since new mutual fund add to the closing price table?? - This is handled by a trigger
+        /*
         float price = 0;
         String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?, ?)";
         PreparedStatement cpStat = conn.prepareStatement(addClosingPrice);
         cpStat.setString(1, sym);
         cpStat.setFloat(2, price);
         cpStat.setString(3, cDate);
-        cpStat.execute();
+        cpStat.execute();'''*/
+
         return;
     }
 

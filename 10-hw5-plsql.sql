@@ -128,7 +128,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
         SET balance = balance - total_shares_val
         WHERE login= log;
 
-    INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (last_trx+1, log, symb, CURRENT_DATE, 'buy',  numb_shares, shares_val, total_shares_val);
+    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ( log, symb, CURRENT_DATE, 'buy',  numb_shares, shares_val, total_shares_val);
 
     /* updates the owns table to list the newly purchased shares*/
     perform shares from owns where login = log and symbol = symb;
@@ -174,8 +174,6 @@ CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(3
 
     total_shares_to_buy := FLOOR(amount/shares_val);
 
-    last_trx := (SELECT MAX(trx_id) FROM trxlog);
-
     new_buyer_cap := buyer_cap - total_shares_to_buy*shares_val;
 
     IF new_buyer_cap < 0 THEN return False;
@@ -185,7 +183,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(3
         SET balance = balance - total_shares_to_buy*shares_val
         WHERE login= log;
 
-    INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (last_trx+1, log, symb, CURRENT_DATE, 'buy',  total_shares_to_buy, shares_val, total_shares_to_buy*shares_val);
+    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, CURRENT_DATE, 'buy',  total_shares_to_buy, shares_val, total_shares_to_buy*shares_val);
 
     /* updates the owns table to list the newly purchased shares*/
     perform shares from owns where login = log and symbol = symb;
@@ -304,10 +302,12 @@ CREATE OR REPLACE FUNCTION price_initialization()
     DECLARE
     lowestPrice decimal(10, 2);
     BEGIN
+
         lowestPrice := (SELECT price
             FROM closing_price
             ORDER BY p_date DESC, price ASC
             FETCH FIRST ROW ONLY);
+
         INSERT INTO closing_price(symbol, price, p_date) VALUES(NEW.symbol, lowestPrice, current_date);
         RETURN NULL;
     END;
@@ -320,8 +320,11 @@ CREATE TRIGGER price_initialization
     FOR EACH ROW
     EXECUTE FUNCTION price_initialization();
 
+INSERT INTO MUTUAL_FUND (symbol,name,description,category,c_date) VALUES ( 'PQEDF', 'money-market', 'money market, conservative', 'fixed', TO_DATE('2020-01-06', 'YYYY-MM-DD') );
 
-/*Sell rebalance*/
+
+
+/*Sell rebalance --Assumption: We should also update owns since there are shares being sold*/
 DROP FUNCTION sell_rebalance();
 CREATE OR REPLACE FUNCTION sell_rebalance()
     RETURNS TRIGGER AS
@@ -329,8 +332,8 @@ CREATE OR REPLACE FUNCTION sell_rebalance()
     DECLARE
     shares_val decimal(10, 2);
     total_shares_val decimal(10, 2);
-
     BEGIN
+
     /*Get the most recent day's value for the stock*/
     shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE NEW.symbol
@@ -343,6 +346,7 @@ CREATE OR REPLACE FUNCTION sell_rebalance()
     UPDATE CUSTOMER
         SET balance = balance + total_shares_val
         WHERE login=NEW.login;
+
     END;
 
     $$ LANGUAGE plpgsql;
@@ -354,4 +358,48 @@ CREATE TRIGGER price_initialization
         WHEN (NEW.action = 'sell')
     EXECUTE FUNCTION sell_rebalance();
 
-INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (18, 'mike', NULL , TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'sell',  NULL, NULL, 1000.00);
+
+CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_shares int)
+    RETURNS BOOLEAN
+    AS $$
+    DECLARE
+    shares_val decimal(10, 2);
+    total_shares_val decimal(10, 2);
+
+    buyer_shares decimal(10, 2);
+    new_buyer_shares decimal(10, 2);
+    BEGIN
+
+    shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE symb
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+    total_shares_val := shares_val * numb_shares;
+
+    buyer_shares := (SELECT shares FROM OWNS
+            WHERE login LIKE log and symbol like symb
+            FETCH FIRST ROW ONLY);
+
+    IF buyer_shares = null THEN return False;
+    END IF;
+
+    new_buyer_shares := buyer_shares - numb_shares;
+
+    IF new_buyer_shares < 0 THEN return False;
+    END IF;
+
+    /*Updates the owns table*/
+    UPDATE OWNS
+        SET shares = shares - numb_shares
+        WHERE login=login and symbol=symb;
+
+    /*This calls the trigger that we had to make*/
+    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, CURRENT_DATE, 'sell',  numb_shares, shares_val, total_shares_val);
+
+    RETURN TRUE;
+
+    END;
+    $$ LANGUAGE plpgsql;
+
+SELECT SELL_SHARES( 'mike', 'MM', 1);
