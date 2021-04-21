@@ -137,7 +137,7 @@ public class teamTenProj {
                     } else if(userOp.equals("4")) {
                         searchMutualFund(conn, scan);
                     } else if(userOp.equals("5")) {
-                        depositAmount();
+                        depositAmount(userName, conn, scan);
                     } else if(userOp.equals("6")) {
                         buyShares();
                     } else if(userOp.equals("7")) {
@@ -222,9 +222,21 @@ public class teamTenProj {
         return;
     }
 
-    private static void depositAmount() {
+    //I think deposit for investment needs to be tweake---- NEEDS FIXED
+    private static void depositAmount(String userName, Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to deposit amount for investment");
         System.out.println("------------------------------------------------------------------");
+
+        
+        System.out.println("How much of it would you like to deposit");
+        String amount = scn.nextLine();
+
+        CallableStatement searchFunds = conn.prepareCall("call deposit_for_investment( ? , ? )");
+        searchFunds.setString(1, userName);
+        searchFunds.setInt(2, Integer.parseInt(amount));
+        searchFunds.execute();
+        searchFunds.close();
+        
         return;
     }
 

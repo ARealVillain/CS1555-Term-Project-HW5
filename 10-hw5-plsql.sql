@@ -44,6 +44,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
         cur_symbol varchar(20);
         cur_price decimal(10,2);
         cur_allocation record;
+
         /*query to determine allocation number that has the same login as the parameter with max date*/
         allocation_number int := (select allocation_no from allocation where login=cur_login order by P_DATE desc limit 1);
         preference_cursor CURSOR FOR SELECT allocation_no,symbol,percentage FROM PREFERS WHERE allocation_no=allocation_number;
@@ -59,8 +60,10 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
             cur_symbol := cur_allocation.symbol;
             cur_percent := cur_allocation.percentage;
             cur_price := (select price from closing_price where symbol=cur_symbol order by p_date desc limit 1);
+
             /* calculate the amount of shares that should be purchased*/
             shares_to_buy:=FLOOR(cur_percent*amount/cur_price);
+
             /* use the buy_shares function to purchase the shares*/
             if shares_to_buy >0 then
                 INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES ((SELECT MAX(trx_id) FROM trxlog)+1, cur_login, cur_symbol, CURRENT_DATE, 'deposit',  shares_to_buy, cur_price, shares_to_buy*cur_price);
@@ -75,6 +78,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
                 /*sum the amount spent*/
                 cur_amount = cur_amount +shares_to_buy*cur_price;
             end if;
+
         END LOOP;
         amount:=amount-cur_amount;
         close preference_cursor;
