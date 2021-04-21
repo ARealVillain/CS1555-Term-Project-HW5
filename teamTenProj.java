@@ -139,7 +139,7 @@ public class teamTenProj {
                     } else if(userOp.equals("5")) {
                         depositAmount(userName, conn, scan);
                     } else if(userOp.equals("6")) {
-                        buyShares();
+                        buyShares(userName, conn, scan);
                     } else if(userOp.equals("7")) {
                         sellShares();
                     } else if(userOp.equals("8")) {
@@ -216,9 +216,54 @@ public class teamTenProj {
         return;
     }
 
-    private static void buyShares() {
+    private static void buyShares(String userName, Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to buy shares");
         System.out.println("------------------------------------------------------------------");
+
+        System.out.println("Would you like to specify the <number> or the <amount> to be spent");
+        String choice = scn.nextLine();
+        System.out.println(choice);
+        if(choice.equals("number")){
+
+            System.out.println("What symbol would you like to buy?");
+            String symbol = scn.nextLine();
+
+            System.out.println("What number of shares would you like to buy?");
+            int numberShares = Integer.parseInt(scn.nextLine());
+
+            CallableStatement buyShares = conn.prepareCall("{?=call buy_shares( ? , ? , ? )}");
+            buyShares.registerOutParameter(1, Types.BOOLEAN);
+            buyShares.setString(2, userName);
+            buyShares.setString(3, symbol);
+            buyShares.setInt(4, numberShares);
+            buyShares.execute();
+
+            Boolean succeeded = buyShares.getBoolean(1);
+            if(!succeeded)
+                System.out.println("Sorry not enough funds");
+            buyShares.close();
+        }
+        else if(choice.equals("amount")){
+            //Create new version of buy_shares that is based on amount
+            System.out.println("What symbol would you like to buy?");
+            String symbol = scn.nextLine();
+
+            System.out.println("What number of shares would you like to buy?");
+            int amount = Integer.parseInt(scn.nextLine());
+
+            CallableStatement buyShares = conn.prepareCall("{?=call buy_shares_by_amount( ? , ? , ? )}");
+            buyShares.registerOutParameter(1, Types.BOOLEAN);
+            buyShares.setString(2, userName);
+            buyShares.setString(3, symbol);
+            buyShares.setInt(4, amount);
+            buyShares.execute();
+
+            Boolean succeeded = buyShares.getBoolean(1);
+            if(!succeeded)
+                System.out.println("Sorry not enough funds");
+            buyShares.close();
+        }
+
         return;
     }
 
@@ -227,7 +272,6 @@ public class teamTenProj {
         System.out.println("Function to deposit amount for investment");
         System.out.println("------------------------------------------------------------------");
 
-        
         System.out.println("How much of it would you like to deposit");
         String amount = scn.nextLine();
 

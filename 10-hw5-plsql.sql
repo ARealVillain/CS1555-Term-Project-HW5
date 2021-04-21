@@ -147,6 +147,63 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
 
 SELECT BUY_SHARES('mike', 'MM', 5);
 
+
+/* Task/Question 4 */
+DROP FUNCTION buy_shares_by_amount(login varchar, symb varchar, num_shares integer);
+CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(30), amount int)
+    RETURNS BOOLEAN
+    AS $$
+    DECLARE
+    shares_val decimal(10, 2);
+    total_shares_to_buy decimal(10, 2);
+    buyer_cap decimal(10, 2);
+    new_buyer_cap decimal(10, 2);
+    last_trx int;
+    BEGIN
+    /*Get the most recent day's value for the stock*/
+    shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE symb
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+
+
+    buyer_cap := (SELECT BALANCE FROM CUSTOMER
+            WHERE login LIKE log
+            FETCH FIRST ROW ONLY);
+
+    total_shares_to_buy := FLOOR(amount/shares_val);
+
+    last_trx := (SELECT MAX(trx_id) FROM trxlog);
+
+    new_buyer_cap := buyer_cap - total_shares_to_buy*shares_val;
+
+    IF new_buyer_cap < 0 THEN return False;
+    END IF;
+
+    UPDATE CUSTOMER
+        SET balance = balance - total_shares_to_buy*shares_val
+        WHERE login= log;
+
+    INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES (last_trx+1, log, symb, CURRENT_DATE, 'buy',  total_shares_to_buy, shares_val, total_shares_to_buy*shares_val);
+
+    /* updates the owns table to list the newly purchased shares*/
+    perform shares from owns where login = log and symbol = symb;
+    if found then
+        update owns
+        set shares = shares + total_shares_to_buy
+        where login=log and symbol=symb;
+    else
+        INSERT INTO OWNS(login,symbol,shares) VALUES(log,symb,total_shares_to_buy);
+    end if;
+    RETURN TRUE;
+
+    END;
+    $$ LANGUAGE plpgsql;
+
+SELECT BUY_SHARES_BY_AMOUNT('mike', 'MM', 43);
+
+
 /* Task/Question 5 */
 
 CREATE OR REPLACE FUNCTION buy_on_date()
