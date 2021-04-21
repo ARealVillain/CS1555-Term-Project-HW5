@@ -1,5 +1,6 @@
 import java.util.*;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 
 public class teamTenProj {
     public static void main(String args[]) throws SQLException, ClassNotFoundException {
@@ -49,12 +50,10 @@ public class teamTenProj {
                         rid = res1.getString("login");
                     }
                     
-                    if (rid == null){
+                    if (rid == null)
                         System.out.println("\nSorry thats a bad login!\n");
-                    }
-                    else{
+                    else
                         loggedIn = true;
-                    }
                 }
 
 
@@ -117,12 +116,10 @@ public class teamTenProj {
                         rid = res1.getString("login");
                     }
                     
-                    if (rid == null){
+                    if (rid == null)
                         System.out.println("\nSorry thats a bad login!\n");
-                    }
-                    else{
+                    else
                         loggedIn = true;
-                    }
                 }
 
                 while(custFlag) {
@@ -136,7 +133,7 @@ public class teamTenProj {
                     } else if(userOp.equals("2")) {
                         showMFNames(conn);
                     } else if(userOp.equals("3")) {
-                        showMFPrices();
+                        showMFPrices(conn, scan);
                     } else if(userOp.equals("4")) {
                         searchMutualFund();
                     } else if(userOp.equals("5")) {
@@ -238,11 +235,32 @@ public class teamTenProj {
         return;
     }
 
-    private static void showMFPrices() {
+    private static void showMFPrices(Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to show mutual funds sorted by prices on a date");
         System.out.println("------------------------------------------------------------------");
+
+        System.out.println("What date would you like to check? Please make it in the format YYYY-MM-DD");
+        String date = scn.nextLine();
+
+        String fundPricesQuery = "SELECT symbol, price FROM CLOSING_PRICE WHERE p_date = TO_DATE( ? , 'YYYY-MM-DD')ORDER BY price DESC";
+        PreparedStatement fundPricesPs = conn.prepareStatement(fundPricesQuery);
+        fundPricesPs.setString(1, date);
+
+        //execute a query
+        ResultSet balanceRes = fundPricesPs.executeQuery();
+
+        //Assess
+        String rPrice = null;
+        String rName = "";
+        while (balanceRes.next()) {
+            rName = balanceRes.getString("symbol");
+            rPrice = balanceRes.getString("price");
+            System.out.println("Symbol: " + rName + "  Price: " + rPrice);
+        }
+        
         return;
     }
+
     //Assumptions: Show all MFNames, not just the ones for the user
     private static void showMFNames(Connection conn) throws SQLException {
         System.out.println("Function to show mutual funds sorted by names");
@@ -255,7 +273,6 @@ public class teamTenProj {
         //execute a query
         ResultSet fundNamesRes = fundNamesPs.executeQuery();
 
-        
         System.out.println("Here are all of the fund names: \n");
         while (fundNamesRes.next()) {
             //Print names
