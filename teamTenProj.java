@@ -135,7 +135,7 @@ public class teamTenProj {
                     } else if(userOp.equals("3")) {
                         showMFPrices(conn, scan);
                     } else if(userOp.equals("4")) {
-                        searchMutualFund();
+                        searchMutualFund(conn, scan);
                     } else if(userOp.equals("5")) {
                         depositAmount();
                     } else if(userOp.equals("6")) {
@@ -228,9 +228,34 @@ public class teamTenProj {
         return;
     }
 
-    private static void searchMutualFund() {
+    private static void searchMutualFund( Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to search for a mutual fund");
         System.out.println("------------------------------------------------------------------");
+        Boolean badKeywords = true;
+        String kw1 = "";
+        String kw2 = "";
+        while(badKeywords){
+            System.out.println("What is the first keyword you would like to use? Please make sure it is less than 30 chars");
+            kw1 = scn.nextLine();
+            System.out.println("What is the second keyword you would like to use? Please make sure it is less than 30 chars");
+            kw2 = scn.nextLine();
+
+            if( kw1.length() <= 30 || kw2.length() <= 30)
+                badKeywords = false;
+            else   
+                System.out.println("Sorry, that's too long");
+        }
+
+
+        CallableStatement searchFunds = conn.prepareCall("{?= call search_mutual_funds( ? , ? )}");
+        searchFunds.registerOutParameter(1, Types.VARCHAR);
+        searchFunds.setString(2, kw1);
+        searchFunds.setString(3, kw2);
+        searchFunds.execute();
+
+        String rReturn = searchFunds.getString(1);
+        searchFunds.close();
+        System.out.println(rReturn);
 
         return;
     }

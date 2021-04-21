@@ -3,12 +3,15 @@
 /* Erik Nordby - ern23 */
 /* Kyle Tissue - kjt32 */
 
+
+
+
 /* Task/Question 2 */
+DROP FUNCTION search_mutual_funds(arg1 varchar, arg2 varchar);
 CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(30), arg2 varchar(30))
-    RETURNS TEXT
-    AS $$
+    RETURNS VARCHAR(10000000) AS $$
     DECLARE
-    fund_list TEXT := '[';
+    fund_list VARCHAR(10000000) := '[';
     fund_cursor CURSOR FOR SELECT * FROM MUTUAL_FUND;
     fund_rec MUTUAL_FUND%ROWTYPE;
     BEGIN
