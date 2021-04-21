@@ -10,7 +10,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "102Camelot");
+        props.setProperty("password", "urPwd");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
