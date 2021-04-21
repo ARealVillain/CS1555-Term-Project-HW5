@@ -3,13 +3,20 @@ import java.sql.*;
 
 public class teamTenProj {
     public static void main(String args[]) throws SQLException, ClassNotFoundException {
+
         //Set up connection with SQL
         Class.forName("org.postgresql.Driver");
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "102Camelot");
+        props.setProperty("password", "urPassword");
         Connection conn = DriverManager.getConnection(url, props);
+
+        Statement st = conn.createStatement();
+        String query1 =
+                "SELECT login FROM public.owns";
+        ResultSet res1 = st.executeQuery(query1);
+        System.out.println(res1);
 
         Scanner scan = new Scanner(System.in);
         System.out.println("Are you an admin or a customer?");
