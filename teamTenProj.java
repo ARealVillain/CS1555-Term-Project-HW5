@@ -78,7 +78,7 @@ public class teamTenProj {
                     } else if(userOp.equals("6")) {
                         rankInvestors(conn, scan);
                     } else if(userOp.equals("7")) {
-                        updateDate();
+                        updateDate(conn, scan);
                     } else if(userOp.equals("8")) {
                         adminFlag = false;
                     } else if(userOp.equals("9")) {
@@ -424,9 +424,16 @@ public class teamTenProj {
         return;
     }
 
-    private static void updateDate() {
+    private static void updateDate(Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to update the current date");
         System.out.println("------------------------------------------------------------------");
+        System.out.println("What date would you like to set p_date to? Please use the format (YYYY-MM-DD)");
+        String date = scn.nextLine();
+
+        PreparedStatement upDate = conn.prepareStatement("UPDATE MUTUAL_DATE SET p_date = TO_DATE( ? , 'YYYY-MM-DD') ");
+        upDate.setString(1, date);
+        upDate.execute();
+
         return;
     }
 
@@ -473,8 +480,6 @@ public class teamTenProj {
             number = kRes.getString("shares");
             System.out.println(cat + " "+ number);
         }
-
-        
 
         return;
     }
