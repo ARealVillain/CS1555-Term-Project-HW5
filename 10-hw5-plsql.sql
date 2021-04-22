@@ -412,15 +412,18 @@ SELECT SELL_SHARES( 'mike', 'MM', 1);
 
 
 /* join login to closing price where we have retrived the latest closing price for all of the stocks*/
+DROP VIEW INVESTOR_RANK
 CREATE VIEW INVESTOR_RANK AS
-    SELECT login, sum(shares*price) FROM OWNS JOIN (
-        SELECT CLOSING_PRICE.symbol, price FROM CLOSING_PRICE JOIN (
-            SELECT symbol, MAX(p_date) as p_date from closing_price
-            GROUP BY symbol)
-            as MAX_DATE on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol)
-        as LATEST_PRICE ON OWNS.symbol = LATEST_PRICE.symbol
+    SELECT login, sum(shares*price) FROM OWNS JOIN
+        MOST_RECENT_STOCK_VAL ON OWNS.symbol = MOST_RECENT_STOCK_VAL.symbol
     GROUP BY login
     ORDER BY sum(shares*price) DESC;
+
+CREATE VIEW MOST_RECENT_STOCK_VAL AS
+    SELECT CLOSING_PRICE.symbol, price FROM CLOSING_PRICE JOIN (
+            SELECT symbol, MAX(p_date) as p_date from closing_price
+            GROUP BY symbol)
+            as MAX_DATE on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
 
 SELECT * from INVESTOR_RANK
 
@@ -431,4 +434,6 @@ SELECT CLOSING_PRICE.symbol as symbol, price FROM CLOSING_PRICE JOIN (
     GROUP BY symbol) as MAX_DATE
     on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
 
-SELECT * FROM rank_investors()
+SELECT action, symbol, sum(amount) from trxlog
+    WHERE login='mike'
+    GROUP BY action, symbol
