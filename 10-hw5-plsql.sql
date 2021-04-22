@@ -346,17 +346,70 @@ CREATE OR REPLACE FUNCTION sell_rebalance()
     UPDATE CUSTOMER
         SET balance = balance + total_shares_val
         WHERE login=NEW.login;
-
+    return NULL;
     END;
 
     $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS sell_rebalance ON trxlog;
-CREATE TRIGGER price_initialization
+CREATE TRIGGER sell_rebalance
     AFTER INSERT ON trxlog
     FOR EACH ROW
         WHEN (NEW.action = 'sell')
     EXECUTE FUNCTION sell_rebalance();
+
+
+/*price_jump trigger*/
+CREATE OR REPLACE FUNCTION price_jump()
+    RETURNS TRIGGER AS
+    $$
+    DECLARE
+    owners record;
+    curSymbol varchar(20);
+    prevPrice decimal(10, 2);
+    curPrice decimal(10, 2);
+    ownedShares int;
+    owns_cursor CURSOR FOR SELECT login,shares from owns where symbol like NEW.symbol;
+    BEGIN
+        /* if the price change was large enough continue otherwise do nothing*/
+        curPrice:=NEW.price;
+        curSymbol:=NEW.symbol;
+
+        prevPrice:=(SELECT price
+            FROM closing_price
+            WHERE closing_price.symbol = curSymbol
+            ORDER BY p_date DESC
+            LIMIT 1 OFFSET 1);
+
+        IF prevPrice + 10 < curPrice THEN
+            /*loop through everyone who owns the current symbol and sell that symbol*/
+            OPEN owns_cursor;
+            LOOP
+                FETCH owns_cursor INTO owners;
+                if not found then
+                    exit;
+                end if;
+                ownedShares:=owners.shares;
+                /*insert the current transaction which will update the balance of the user with the above trigger*/
+                INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (owners.login, curSymbol , current_timestamp, 'sell',  ownedShares, curPrice, curPrice*ownedShares);
+                /* delete the shares from the owns table to sell them*/
+                DELETE FROM owns where symbol like curSymbol and login like owners.Login;
+            END LOOP;
+        END IF;
+        return NULL;
+    END;
+    $$
+    LANGUAGE 'plpgsql';
+
+DROP TRIGGER IF EXISTS price_jump ON closing_price;
+CREATE TRIGGER price_jump
+    AFTER INSERT ON closing_price
+    for each row
+    EXECUTE FUNCTION price_jump();
+
+INSERT INTO owns (login,symbol,shares) VALUES ('mike','MM',8);
+INSERT INTO closing_price (symbol,price,p_date) VALUES ('MM',30,current_date);
+
 
 /*Sell shares*/
 CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_shares int)
