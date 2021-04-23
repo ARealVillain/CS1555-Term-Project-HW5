@@ -202,7 +202,6 @@ public class teamTenProj {
         System.out.println("Function to change customer preference");
         System.out.println("------------------------------------------------------------------");
         double percent = 0;
-        int allocationNum=10;
         boolean notDone=true;
         
         
@@ -226,6 +225,16 @@ public class teamTenProj {
         System.out.println("if you do not want to change your allocation preferences type -1 now otherwise type anything to continue");
         if(scn.nextLine().equals("-1")) {
             return;
+        }
+        int allocationNum;
+        String noQuery = "SELECT allocation_no FROM ALLOCATION ORDER BY allocation_no DESC LIMIT 1";
+        PreparedStatement noPs = conn.prepareStatement(noQuery);
+        ResultSet noRes = noPs.executeQuery();
+        if(noRes.next()) {
+            allocationNum=noRes.getInt("allocation_no")+1;
+        }
+        else {
+            allocationNum=0;
         }
         
         
