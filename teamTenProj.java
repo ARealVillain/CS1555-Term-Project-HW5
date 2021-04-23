@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.lang.*;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 public class teamTenProj {
@@ -15,7 +14,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "frogger26");
+        props.setProperty("password", "102Camelot");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
@@ -157,7 +156,7 @@ public class teamTenProj {
                     } else if(userOp.equals("11")) {
                         rankAllocations();
                     } else if(userOp.equals("12")) {
-                        showPortfolio();
+                        showPortfolio(conn, scan, userName);
                     } else if(userOp.equals("13")) {
                         custFlag = false;
                     } else if(userOp.equals("14")) {
@@ -186,9 +185,37 @@ public class teamTenProj {
         scan.close();
     }
 
-    private static void showPortfolio() {
+    private static void showPortfolio(Connection conn, Scanner scn, String userName) throws SQLException {
         System.out.println("Function to show customer portfolio");
         System.out.println("------------------------------------------------------------------");
+        //create a query
+        String portfolioQuery = "select * from get_portfolio(?)";
+        PreparedStatement portfolioPs = conn.prepareStatement(portfolioQuery);
+        portfolioPs.setString(1, userName);
+
+        //execute a query
+        ResultSet portfolioRes = portfolioPs.executeQuery();
+        float total_val = 0;
+        System.out.println("Symbol, Shares Owned, Value of Shares, Cost of Shares, Adjusted Cost of Shares, Total Yield from Shares");
+        while (portfolioRes.next()) {
+            //Print names
+            System.out.print(portfolioRes.getString("mf_symb"));
+            System.out.print(" ");
+            System.out.print(portfolioRes.getString("mf_shares_owned"));
+            String mf_val = portfolioRes.getString("mf_val");
+            System.out.print(" ");
+            System.out.print(portfolioRes.getString("mf_val"));
+            System.out.print(" ");
+            System.out.print(portfolioRes.getString("mf_cost"));
+            System.out.print(" ");
+            System.out.print(portfolioRes.getString("mf_adj_cost"));
+            System.out.print(" ");
+            System.out.print(portfolioRes.getString("mf_yield"));
+            System.out.print(" ");
+            total_val += Float.parseFloat(mf_val);
+            System.out.println(" ");
+        }
+        System.out.println("Here is the total value of your mutual fund today: " + Float.toString(total_val) + "\n");
         return;
     }
 

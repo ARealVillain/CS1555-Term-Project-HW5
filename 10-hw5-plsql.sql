@@ -478,5 +478,37 @@ SELECT CLOSING_PRICE.symbol as symbol, price FROM CLOSING_PRICE JOIN (
     on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
 
 SELECT action, symbol, sum(amount) from trxlog
-    WHERE login='mike' and action!='deposit'
-    GROUP BY action, symbol
+    WHERE login='mike' and action='buy'
+    GROUP BY action, symbol;
+
+SELECT action, symbol, sum(amount) from trxlog
+    WHERE login='mike' and action='sell'
+    GROUP BY action, symbol;
+
+SELECT * from trxlog WHERE login='mike' and action='buy'
+drop function get_portfolio(user_login varchar)
+CREATE OR REPLACE FUNCTION get_portfolio(user_login varchar)
+RETURNS TABLE(mf_symb varchar(20), mf_shares_owned int, mf_val decimal(10,2), mf_cost decimal(10,2), mf_adj_cost decimal(10,2), mf_yield decimal(10,2) ) AS
+    $$DECLARE
+    BEGIN
+
+    RETURN QUERY SELECT bought_sold.symbol, shares as shares_owned, shares*price as current_val_of_mutual_fund, buy as cost, sell-buy as adj_cost, (shares*price)-(sell-buy) as yield
+        FROM (SELECT login, buy.symbol as symbol, buy, sell FROM (SELECT login, action, symbol, sum(amount) as buy from trxlog
+                WHERE login=user_login and action='buy'
+                GROUP BY login, action, symbol) as buy
+                LEFT JOIN
+                (SELECT action, symbol, sum(amount) as sell from trxlog
+                WHERE login=user_login and action='sell'
+                GROUP BY action, symbol) as sell
+                    on buy.symbol = sell.symbol) as bought_sold
+            join
+            owns on owns.login = bought_sold.login and owns.symbol = bought_sold.symbol
+            join
+            most_recent_stock_val on bought_sold.symbol = most_recent_stock_val.symbol;
+    END;
+    $$
+    LANGUAGE 'plpgsql';
+
+select * from get_portfolio('mike');
+
+
