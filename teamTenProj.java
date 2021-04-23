@@ -17,8 +17,6 @@ public class teamTenProj {
         props.setProperty("password", "102Camelot");
         Connection conn = DriverManager.getConnection(url, props);
 
-        Statement st = conn.createStatement();
-        
 
         Scanner scan = new Scanner(System.in);
         System.out.println("Are you an admin or a customer?");
@@ -656,14 +654,7 @@ public class teamTenProj {
     private static void updateShares(Connection conn, Scanner scan) throws Exception {
         System.out.println("Function to update share quotes for a day");
         System.out.println("------------------------------------------------------------------");
-        System.out.println("Please enter the date when the mutual fund was created in the format <YYYY-MM-DD>");
-        //Think we need to use pseudo date for this instead of having them input it2
-        /*I think we have to format this date input to work with the query but not sure*/
-        String cDate = scan.nextLine();
-        if(cDate.length() > 30) {
-            System.out.println("Sorry that is too long");
-            return;
-        }
+        
         System.out.println("Please enter the file name where the mutual fund symbol and prices are located");
         String fileName = scan.nextLine();
         Scanner fread = new Scanner(new File(fileName));
@@ -676,11 +667,10 @@ public class teamTenProj {
                 return;
             }
             float price = Float.parseFloat(lineSplit[1]);
-            String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?,  TO_DATE( ? , 'YYYY-MM-DD') )";
+            String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?,  (select * from mutual_date) )";
             PreparedStatement cpStat = conn.prepareStatement(addClosingPrice);
             cpStat.setString(1, sym);
             cpStat.setFloat(2, price);
-            cpStat.setString(3, cDate);
             cpStat.execute();
         }
         return;
@@ -716,22 +706,15 @@ public class teamTenProj {
             System.out.println("Sorry that is too long");
             return;
         }
-        System.out.println("Please enter the date when the mutual fund was created in the format <YYYY-MM-DD>");
-        /*I think we have to format this date input to work with the query but not sure*/
-        String cDate = scan.nextLine();
-        if(cDate.length() > 30) {
-            System.out.println("Sorry that is too long");
-            return;
-        }
+        
 
         //Insert into Mutual Fund table
-        String addMF = "INSERT INTO MUTUAL_FUND (symbol,name,description,category,c_date) VALUES (?, ?, ?, ?, TO_DATE( ? , 'YYYY-MM-DD'))";
+        String addMF = "INSERT INTO MUTUAL_FUND (symbol,name,description,category,c_date) VALUES (?, ?, ?, ?, (select * from mutual_date))";
         PreparedStatement pStat = conn.prepareStatement(addMF);
         pStat.setString(1, sym);
         pStat.setString(2, name);
         pStat.setString(3, desc);
         pStat.setString(4, cat);
-        pStat.setString(5, cDate);
         pStat.execute();
 
         //Since new mutual fund add to the closing price table?? - This is handled by a trigger

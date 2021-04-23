@@ -52,7 +52,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
     BEGIN
         OPEN preference_cursor;
         /* loops through the cursor that has stored every allocation_no that matches the login given*/
-        INSERT INTO TRXLOG (login,symbol,t_date,action,amount) VALUES ( cur_login, cur_symbol, CURRENT_DATE, 'deposit', amount);
+        INSERT INTO TRXLOG (login,symbol,t_date,action,amount) VALUES ( cur_login, cur_symbol, (select * from mutual_date), 'deposit', amount);
         LOOP
             FETCH preference_cursor INTO cur_allocation;
             if not found then
@@ -118,7 +118,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
         SET balance = balance - total_shares_val
         WHERE login= log;
 
-    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ( log, symb, CURRENT_DATE, 'buy',  numb_shares, shares_val, total_shares_val);
+    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ( log, symb, (select * from mutual_date), 'buy',  numb_shares, shares_val, total_shares_val);
 
     /* updates the owns table to list the newly purchased shares*/
     perform shares from owns where login = log and symbol = symb;
@@ -173,7 +173,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(3
         SET balance = balance - total_shares_to_buy*shares_val
         WHERE login= log;
 
-    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, CURRENT_DATE, 'buy',  total_shares_to_buy, shares_val, total_shares_to_buy*shares_val);
+    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, (select * from mutual_date), 'buy',  total_shares_to_buy, shares_val, total_shares_to_buy*shares_val);
 
     /* updates the owns table to list the newly purchased shares*/
     perform shares from owns where login = log and symbol = symb;
@@ -222,9 +222,9 @@ CREATE OR REPLACE FUNCTION buy_on_date()
         mutDate := (SELECT p_date
             FROM mutual_date);
 
-        currDate := CAST(CURRENT_DATE AS DATE);
+        ;
 
-        IF mutDate = currDate THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
+        IF mutDate = (select * from mutual_date) THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
         END IF;
 
     END;
@@ -298,7 +298,7 @@ CREATE OR REPLACE FUNCTION price_initialization()
             ORDER BY p_date DESC, price ASC
             FETCH FIRST ROW ONLY);
 
-        INSERT INTO closing_price(symbol, price, p_date) VALUES(NEW.symbol, lowestPrice, current_date);
+        INSERT INTO closing_price(symbol, price, p_date) VALUES(NEW.symbol, lowestPrice, (select * from mutual_date));
         RETURN NULL;
     END;
     $$
@@ -309,10 +309,6 @@ CREATE TRIGGER price_initialization
     AFTER INSERT ON mutual_fund
     FOR EACH ROW
     EXECUTE FUNCTION price_initialization();
-
-INSERT INTO MUTUAL_FUND (symbol,name,description,category,c_date) VALUES ( 'PQEDF', 'money-market', 'money market, conservative', 'fixed', TO_DATE('2020-01-06', 'YYYY-MM-DD') );
-
-
 
 /*Sell rebalance --Assumption: We should also update owns since there are shares being sold*/
 DROP FUNCTION sell_rebalance();
@@ -398,7 +394,7 @@ CREATE TRIGGER price_jump
     EXECUTE FUNCTION price_jump();
 
 INSERT INTO owns (login,symbol,shares) VALUES ('mike','MM',8);
-INSERT INTO closing_price (symbol,price,p_date) VALUES ('MM',30,current_date);
+INSERT INTO closing_price (symbol,price,p_date) VALUES ('MM',30, (select * from mutual_date));
 
 
 /*Sell shares*/
@@ -438,7 +434,7 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
         WHERE login=login and symbol=symb;
 
     /*This calls the trigger that we had to make*/
-    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, CURRENT_DATE, 'sell',  numb_shares, shares_val, total_shares_val);
+    INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, (select * from mutual_date), 'sell',  numb_shares, shares_val, total_shares_val);
 
     RETURN TRUE;
 
