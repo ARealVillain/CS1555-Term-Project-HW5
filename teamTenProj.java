@@ -223,7 +223,7 @@ public class teamTenProj {
            }  
         }
         
-        System.out.println("if you do not want to change your allocation preferences type -1 now");
+        System.out.println("if you do not want to change your allocation preferences type -1 now otherwise type anything to continue");
         if(scn.nextLine().equals("-1")) {
             return;
         }
