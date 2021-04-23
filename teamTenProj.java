@@ -3,6 +3,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.lang.*;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class teamTenProj {
     public static void main(String args[]) throws Exception {
@@ -12,7 +15,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "102Camelot");
+        props.setProperty("password", "frogger26");
         Connection conn = DriverManager.getConnection(url, props);
 
         Statement st = conn.createStatement();
@@ -148,9 +151,9 @@ public class teamTenProj {
                     } else if(userOp.equals("8")) {
                         showROI();
                     } else if(userOp.equals("9")) {
-                        predict();
+                        predict(userName, conn, scan);
                     } else if(userOp.equals("10")) {
-                        changePreference();
+                        changePreference(userName, conn, scan);
                     } else if(userOp.equals("11")) {
                         rankAllocations();
                     } else if(userOp.equals("12")) {
@@ -195,15 +198,145 @@ public class teamTenProj {
         return;
     }
 
-    private static void changePreference() {
+    private static void changePreference(String userName, Connection conn, Scanner scn) throws SQLException{
         System.out.println("Function to change customer preference");
         System.out.println("------------------------------------------------------------------");
+        double percent = 0;
+        int allocationNum=10;
+        boolean notDone=true;
+        
+        
+        
+        //testing if the date is valid
+        String dateQuery = "SELECT p_date FROM ALLOCATION WHERE login=? ORDER BY p_date DESC LIMIT 1";
+        PreparedStatement datePs = conn.prepareStatement(dateQuery);
+        datePs.setString(1, userName);
+        ResultSet dateRes = datePs.executeQuery();
+        if(dateRes.next()) {
+           Timestamp time = dateRes.getTimestamp("p_date");
+           LocalDateTime now = LocalDateTime.now();
+           LocalDateTime time2 = time.toLocalDateTime();
+           if(now.getYear() == time2.getYear() && now.getDayOfYear() == time2.getDayOfYear()) {
+               System.out.println("You already made an allocation today, try again tomorrow");
+               System.out.println();
+               return;
+           }  
+        }
+        
+        System.out.println("if you do not want to change your allocation preferences type -1 now");
+        if(scn.nextLine().equals("-1")) {
+            return;
+        }
+        
+        
+        String allocationIn = "INSERT INTO ALLOCATION (allocation_no,login,p_date) VALUES (?,?,?);";
+        PreparedStatement allocationPs = conn.prepareStatement(allocationIn);
+        allocationPs.setInt(1, allocationNum);
+        allocationPs.setString(2, userName);
+        allocationPs.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+        allocationPs.executeUpdate();
+        
+        while(notDone==true) {
+            System.out.println("currently allocated percent " + percent);
+            System.out.println("Enter the symbol of a mutual fund you would like to allocate");
+            String symbol = scn.nextLine();
+            System.out.println("enter the percent you would like to allocate. ex 0.154 would allocate 15.4%");
+            double allocationVal=scn.nextDouble();
+            scn.nextLine();
+            if(percent + allocationVal > 1) {
+                System.out.println("The percent of allocated funds exceeded 100% please try again");
+            }
+            else{
+                percent=percent+allocationVal;
+                String preferenceIn = "INSERT INTO PREFERS (allocation_no,symbol,percentage) VALUES (?,?,?);";
+                PreparedStatement preferencePs = conn.prepareStatement(preferenceIn);
+                preferencePs.setInt(1, allocationNum);
+                preferencePs.setString(2, symbol);
+                preferencePs.setDouble(3, allocationVal);
+                preferencePs.executeUpdate();
+                if(percent==1) {
+                    System.out.println("allocation complete");
+                    notDone=false;
+                }
+            } 
+        }
+        
         return;
     }
 
-    private static void predict() {
+    private static void predict(String userName, Connection conn, Scanner scn) throws SQLException{
         System.out.println("Function to predict gains or losses of the customer transactions");
         System.out.println("------------------------------------------------------------------");
+        //create a query
+        String trxlogQuery = "SELECT symbol,action,num_shares,price FROM TRXLOG WHERE login=?";
+        PreparedStatement trxlogPs = conn.prepareStatement(trxlogQuery);
+        trxlogPs.setString(1, userName);
+
+        //execute a query
+        ResultSet trxlogRes = trxlogPs.executeQuery();
+
+        //Assess
+        String rSymbol = "";
+        String rAction = "";
+        int rShares = 0;
+        double rPrice = 0;
+        double curPrice;
+        
+        while (trxlogRes.next()) {
+            rSymbol = trxlogRes.getString("symbol");
+            rAction = trxlogRes.getString("action");
+            rShares = trxlogRes.getInt("num_shares");
+            rPrice = Double.parseDouble(trxlogRes.getString("price"));
+            
+            double value = rPrice * (double)rShares;
+            
+            String priceQuery = "SELECT price FROM CLOSING_PRICE WHERE symbol=? ORDER BY p_date DESC LIMIT 1";
+            PreparedStatement pricePs = conn.prepareStatement(priceQuery);
+            pricePs.setString(1, rSymbol);
+            ResultSet priceRes = pricePs.executeQuery();
+            priceRes.next();
+            curPrice=Double.parseDouble(priceRes.getString("price"));
+            
+            if(rAction.equals("buy")) {
+                System.out.println("symbol:"+rSymbol);
+                System.out.println("bought " + rShares + " shares");
+                System.out.println("historical price per share:" + rPrice);
+                System.out.println("current price per share:" + curPrice);
+                if(curPrice>rPrice) {
+                    double sum = curPrice * (double)rShares - value;
+                    System.out.println("profit of " + sum);
+                    System.out.println();
+                }
+                else if (curPrice<rPrice) {
+                    double sum =  value-curPrice * (double)rShares;
+                    System.out.println("loss of " + sum);
+                    System.out.println();
+                }
+                else {
+                    System.out.println("hold");
+                }
+            }
+            else if(rAction.equals("sell")) {
+                System.out.println("symbol:"+rSymbol);
+                System.out.println("bought " + rShares + "shares");
+                System.out.println("historical price per share:" + rPrice);
+                System.out.println("current price per share:" + curPrice);
+                if(curPrice>rPrice) {
+                    double sum = curPrice * (double)rShares - value;
+                    System.out.println("loss of " + sum);
+                    System.out.println();
+                }
+                else if (curPrice<rPrice) {
+                    double sum =  value-curPrice * (double)rShares;
+                    System.out.println("profit of " + sum);
+                    System.out.println();
+                }
+                else {
+                    System.out.println("hold");
+                }
+            }
+            System.out.println();
+        }
         return;
     }
 
