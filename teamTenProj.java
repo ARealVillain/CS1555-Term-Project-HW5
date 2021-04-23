@@ -1,4 +1,7 @@
 import java.util.*;
+
+import javax.print.attribute.standard.PresentationDirection;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
@@ -148,7 +151,7 @@ public class teamTenProj {
                     } else if(userOp.equals("7")) {
                         sellShares(userName, conn, scan);
                     } else if(userOp.equals("8")) {
-                        showROI();
+                        showROI(userName, conn, scan);
                     } else if(userOp.equals("9")) {
                         predict(userName, conn, scan);
                     } else if(userOp.equals("10")) {
@@ -376,9 +379,45 @@ public class teamTenProj {
         return;
     }
 
-    private static void showROI() {
+    private static void showROI(String userName, Connection conn, Scanner scn) throws SQLException {
         System.out.println("Function to calculate and show return of investment");
         System.out.println("------------------------------------------------------------------");
+        String query = "SELECT symbol,shares FROM OWNS WHERE login=?";
+        PreparedStatement roiPS = conn.prepareStatement(query);
+        roiPS.setString(1, userName);
+        ResultSet res = roiPS.executeQuery();
+        while(res.next()) {
+            String sym = res.getString("symbol");
+            int shares = res.getInt("shares");
+            int sharesCalc = 0;
+            Double totalCost = 0.0;
+            String mfQuery = "SELECT name FROM MUTUAL_FUND WHERE symbol=?";
+            PreparedStatement mfPs = conn.prepareStatement(mfQuery);
+            mfPs.setString(1, sym);
+            ResultSet mfRes = mfPs.executeQuery();
+            String name = mfRes.getString("name");
+            String priceQuery = "SELECT price FROM CLOSING_PRICE WHERE symbol=? ORDER BY p_date DESC LIMIT 1";
+            PreparedStatement pricePs = conn.prepareStatement(priceQuery);
+            pricePs.setString(1, sym);
+            ResultSet priceRes = pricePs.executeQuery();
+            Double curPrice = Double.parseDouble(priceRes.getString("price"));
+            String trxlogQuery = "SELECT symbol,action,num_shares,price FROM TRXLOG WHERE login=? AND symbol=? AND action=buy ORDER BY t_date DESC";
+            PreparedStatement trxlogPs = conn.prepareStatement(trxlogQuery);
+            trxlogPs.setString(1, userName);
+            trxlogPs.setString(2, sym);
+            ResultSet trxRes = trxlogPs.executeQuery();
+            while(trxRes.next()) {
+                int tShares = trxRes.getInt("num_shares");
+                Double price = trxRes.getDouble("price");
+                if(sharesCalc < shares) {
+                    sharesCalc += tShares;
+                    totalCost += (price * tShares);
+                }
+            }
+            Double currValue = curPrice * shares;
+            Double roi = (currValue - totalCost) / totalCost;
+            System.out.println("For the mutual fund " + name +" with the symbol " + sym + " the ROI = " + roi);
+        }
         return;
     }
 
