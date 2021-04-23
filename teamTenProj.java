@@ -393,13 +393,15 @@ public class teamTenProj {
             PreparedStatement mfPs = conn.prepareStatement(mfQuery);
             mfPs.setString(1, sym);
             ResultSet mfRes = mfPs.executeQuery();
+            mfRes.next();
             String name = mfRes.getString("name");
             String priceQuery = "SELECT price FROM CLOSING_PRICE WHERE symbol=? ORDER BY p_date DESC LIMIT 1";
             PreparedStatement pricePs = conn.prepareStatement(priceQuery);
             pricePs.setString(1, sym);
             ResultSet priceRes = pricePs.executeQuery();
+            priceRes.next();
             Double curPrice = Double.parseDouble(priceRes.getString("price"));
-            String trxlogQuery = "SELECT symbol,action,num_shares,price FROM TRXLOG WHERE login=? AND symbol=? AND action=buy ORDER BY t_date DESC";
+            String trxlogQuery = "SELECT symbol,action,num_shares,price FROM TRXLOG WHERE login=? AND symbol=? AND action='buy' ORDER BY t_date DESC";
             PreparedStatement trxlogPs = conn.prepareStatement(trxlogQuery);
             trxlogPs.setString(1, userName);
             trxlogPs.setString(2, sym);
