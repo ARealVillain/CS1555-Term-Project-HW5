@@ -294,6 +294,15 @@ public class teamTenProj {
             total_val += Float.parseFloat(mf_val);
             System.out.println(" ");
         }
+
+        String balanceQuery = "select balance from customer where login = ?";
+        PreparedStatement balancePs = conn.prepareStatement(balanceQuery);
+        balancePs.setString(1, userName);
+
+        //execute a query
+        ResultSet balanceRes = balancePs.executeQuery();
+        balanceRes.next();
+        total_val += Float.parseFloat(balanceRes.getString("balance"));
         System.out.println("Here is the total value of your mutual fund today: " + Float.toString(total_val) + "\n");
         return;
     }
@@ -309,8 +318,6 @@ public class teamTenProj {
         System.out.println("------------------------------------------------------------------");
         double percent = 0;
         boolean notDone=true;
-        
-        
         
         //testing if the date is valid
         String dateQuery = "SELECT p_date FROM ALLOCATION WHERE login=? ORDER BY p_date DESC LIMIT 1";
@@ -786,7 +793,7 @@ public class teamTenProj {
                 return;
             }
             float price = Float.parseFloat(lineSplit[1]);
-            String addClosingPrice = "INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?,  (select * from mutual_date) )";
+            String addClosingPrice = "set transaction read write; INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES (?, ?,  (select * from mutual_date) )";
             PreparedStatement cpStat = conn.prepareStatement(addClosingPrice);
             cpStat.setString(1, sym);
             cpStat.setFloat(2, price);
@@ -925,6 +932,56 @@ public class teamTenProj {
         String truncate = "TRUNCATE ADMINISTRATOR CASCADE; TRUNCATE ALLOCATION CASCADE; TRUNCATE CLOSING_PRICE CASCADE; TRUNCATE CUSTOMER CASCADE; TRUNCATE MUTUAL_DATE CASCADE; TRUNCATE MUTUAL_FUND CASCADE; TRUNCATE OWNS CASCADE; TRUNCATE PREFERS CASCADE; TRUNCATE TRXLOG CASCADE;";
         PreparedStatement truncPs = conn.prepareStatement(truncate);
         truncPs.execute();
+
+        System.out.println("Since you are the admin, we need to add you back into the system.");
+        System.out.println("Please enter your login");
+        String login = scan.nextLine();
+        if(login.length() > 10){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter your name");
+        String name = scan.nextLine();
+        if(name.length() > 20){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter your email");
+        String email = scan.nextLine();
+        if(email.length() > 30){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter your password");
+        String password = scan.nextLine();
+        if(password.length() > 10){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        System.out.println("Please enter your address");
+        String address = scan.nextLine();
+        if(address.length() > 30){
+            System.out.println("Sorry that is too long");
+            return;
+        }
+        String addAdmin = "INSERT INTO ADMINISTRATOR (login,name,email,address,password) VALUES (?, ?, ?, ?, ?);";
+        PreparedStatement adminPs = conn.prepareStatement(addAdmin);
+        adminPs.setString(1, login);
+        adminPs.setString(2, name);
+        adminPs.setString(3, email);
+        adminPs.setString(4, address);
+        adminPs.setString(5, password);
+        adminPs.execute();
+
+        System.out.println("What would you like to initialize the date to? (Please use the format <YYYY-MM-DD>)");
+        String newDate = scan.nextLine();
+        String dateQuery = "INSERT INTO MUTUAL_DATE (p_date) VALUES (TO_DATE( ? , 'YYYY-MM-DD') );";
+        PreparedStatement custPs = conn.prepareStatement(dateQuery);
+        custPs.setString(1, newDate);
+        custPs.execute();
+
+
+        
 
         return;
     }

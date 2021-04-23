@@ -5,7 +5,9 @@
 
 INSERT INTO ADMINISTRATOR (login,name,email,address,password) VALUES ('admin', 'Administrator', 'admin@betterfuture.com' ,'5th Ave, Pitt', 'root');
 
-INSERT INTO CUSTOMER (login,name,email,address,password,balance) VALUES ('mike', 'Mike Costa', 'mike@betterfuture.com', '1st street', 'pwd', 750.00);
+INSERT INTO MUTUAL_DATE (p_date) VALUES (TO_DATE('2020-04-04', 'YYYY-MM-DD'));
+
+INSERT INTO CUSTOMER (login,name,email,address,password,balance) VALUES ('mike', 'Mike Costa', 'mike@betterfuture.com', '1st street', 'pwd', 0);
 INSERT INTO CUSTOMER (login,name,email,address,password,balance) VALUES ('mary', 'Mary Chrysanthis', 'mary@betterfuture.com', '2nd street', 'pwd', 0.00);
 
 INSERT INTO ALLOCATION (allocation_no,login,p_date) VALUES (0, 'mike', TO_DATE('2020-03-28', 'YYYY-MM-DD'));
@@ -94,8 +96,6 @@ INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES ('IMS', 13.00, TO_DATE('2
 INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES ('IMS', 12.00, TO_DATE('2020-04-02', 'YYYY-MM-DD'));
 INSERT INTO CLOSING_PRICE (symbol,price,p_date) VALUES ('IMS', 11.00, TO_DATE('2020-04-03', 'YYYY-MM-DD'));
 
-INSERT INTO MUTUAL_DATE (p_date) VALUES (TO_DATE('2020-04-04', 'YYYY-MM-DD'));
-
 INSERT INTO OWNS (login, symbol, shares) VALUES ('mike', 'RE', 50);
 
 INSERT INTO PREFERS (allocation_no, symbol, percentage) VALUES (0, 'MM', 0.50);
@@ -110,4 +110,4 @@ INSERT INTO PREFERS (allocation_no, symbol, percentage) VALUES (2, 'IMS', 0.40);
 INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', NULL , TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'deposit',  NULL, NULL, 1000.00);
 INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'MM', TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'buy', 50, 10.00 , 500.00);
 INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'RE', TO_DATE('2020-03-29', 'YYYY-MM-DD'), 'buy', 50, 10.00, 500.00);
-INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'MM', TO_DATE('2020-04-01', 'YYYY-MM-DD'), 'sell', 50, 15.00, 1000.00);
+INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES ('mike', 'MM', TO_DATE('2020-04-02', 'YYYY-MM-DD'), 'sell', 50, 15.00, 750.00);

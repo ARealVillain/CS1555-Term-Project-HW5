@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION SEARCH_MUTUAL_FUNDS (arg1 varchar(30), arg2 varchar(3
     END;
     $$ LANGUAGE plpgsql;
 
-SELECT SEARCH_MUTUAL_FUNDS('stock', 'bond');
+/*SELECT SEARCH_MUTUAL_FUNDS('stock', 'bond');*/
 
 /* Task/Question 3 */
 CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amount dec(10,2))
@@ -61,16 +61,22 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
             /*get the symbol percent and price that correspond to the current allocation_no*/
             cur_symbol := cur_allocation.symbol;
             cur_percent := cur_allocation.percentage;
-            cur_price := (select price from closing_price where symbol=cur_symbol order by p_date desc limit 1);
+
+            cur_price := (select price from closing_price where symbol=cur_symbol and p_date=(select * from mutual_date) order by p_date desc limit 1);
+            if cur_price is null then cur_price := (select price from closing_price where symbol=cur_symbol order by p_date desc limit 1); end if;
 
             /* calculate the amount of shares that should be purchased*/
             shares_to_buy:=FLOOR(cur_percent*amount/cur_price);
+
+
             /* use the buy_shares function to purchase the shares*/
             if shares_to_buy > 0 then
                 bought := buy_shares(cur_login, cur_symbol, shares_to_buy);
             end if;
         END LOOP;
+
         amount:=amount-cur_amount;
+
         close preference_cursor;
         /* adds the remaining deposit to the customers balance*/
         UPDATE customer
@@ -80,7 +86,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
         commit;
     END;
     $$;
-CALL deposit_for_investment('mike', 1000);
+
 
 
 /* Task/Question 4 */
@@ -97,9 +103,16 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
     BEGIN
     /*Get the most recent day's value for the stock*/
     shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE symb and p_date = (select * from mutual_date)
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+    if shares_val is null then
+        shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE symb
             ORDER BY P_DATE DESC
             FETCH FIRST ROW ONLY);
+    end if;
 
     total_shares_val := shares_val * numb_shares;
 
@@ -135,7 +148,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
     $$ LANGUAGE plpgsql;
 
 
-SELECT BUY_SHARES('mike', 'MM', 5);
+/*SELECT BUY_SHARES('mike', 'IMS', 1);*/
 
 
 /* Task/Question 4 */
@@ -152,9 +165,16 @@ CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(3
     BEGIN
     /*Get the most recent day's value for the stock*/
     shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE symb and p_date = (select * from mutual_date)
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+    if shares_val is null then
+        shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE symb
             ORDER BY P_DATE DESC
             FETCH FIRST ROW ONLY);
+    end if;
 
 
 
@@ -164,7 +184,7 @@ CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(3
 
     total_shares_to_buy := FLOOR(amount/shares_val);
 
-    new_buyer_cap := buyer_cap - total_shares_to_buy*shares_val;
+    new_buyer_cap := buyer_cap - amount;
 
     IF new_buyer_cap < 0 THEN return False;
     END IF;
@@ -189,11 +209,10 @@ CREATE OR REPLACE FUNCTION BUY_SHARES_by_amount (log varchar(30), symb varchar(3
     END;
     $$ LANGUAGE plpgsql;
 
-SELECT BUY_SHARES_BY_AMOUNT('mike', 'MM', 43);
+/*SELECT BUY_SHARES_BY_AMOUNT('erik', 'MM', 1);*/
 
 
 /* Task/Question 5 */
-
 CREATE OR REPLACE FUNCTION buy_on_date()
     RETURNS TRIGGER AS
     $$
@@ -204,12 +223,12 @@ CREATE OR REPLACE FUNCTION buy_on_date()
     mutDate date;
     currDate date;
     BEGIN
-        userLog := (SELECT login
+        userLog := (SELECT owns.login
             FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
             ORDER BY shares ASC
             FETCH FIRST ROW ONLY);
 
-        symbol := (SELECT symbol
+        symbol := (SELECT owns.symbol
             FROM owns JOIN customer c ON owns.login = c.login NATURAL JOIN mutual_date m
             ORDER BY shares ASC
             FETCH FIRST ROW ONLY);
@@ -217,16 +236,16 @@ CREATE OR REPLACE FUNCTION buy_on_date()
         purchasable := (SELECT div(balance, price)
             FROM closing_price JOIN owns o on closing_price.symbol = o.symbol JOIN customer c2 on c2.login = o.login
             ORDER BY p_date DESC
-            FETCH FIRST 2 ROWS ONLY);
+            FETCH FIRST ROW ONLY);
 
         mutDate := (SELECT p_date
             FROM mutual_date);
 
-        ;
+        currDate := CAST(CURRENT_DATE AS DATE);
 
-        IF mutDate = (select * from mutual_date) THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
+        IF mutDate = currDate THEN EXECUTE BUY_SHARES(userLog, symbol, purchasable);
         END IF;
-
+    RETURN NULL;
     END;
     $$
     LANGUAGE 'plpgsql';
@@ -298,6 +317,8 @@ CREATE OR REPLACE FUNCTION price_initialization()
             ORDER BY p_date DESC, price ASC
             FETCH FIRST ROW ONLY);
 
+        if lowestPrice IS NULL THEN RETURN NULL; end if;
+
         INSERT INTO closing_price(symbol, price, p_date) VALUES(NEW.symbol, lowestPrice, (select * from mutual_date));
         RETURN NULL;
     END;
@@ -311,7 +332,6 @@ CREATE TRIGGER price_initialization
     EXECUTE FUNCTION price_initialization();
 
 /*Sell rebalance --Assumption: We should also update owns since there are shares being sold*/
-DROP FUNCTION sell_rebalance();
 CREATE OR REPLACE FUNCTION sell_rebalance()
     RETURNS TRIGGER AS
     $$
@@ -322,9 +342,16 @@ CREATE OR REPLACE FUNCTION sell_rebalance()
 
     /*Get the most recent day's value for the stock*/
     shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE NEW.symbol and p_date = NEW.t_date
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+    if shares_val is null then
+        shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE NEW.symbol
             ORDER BY P_DATE DESC
             FETCH FIRST ROW ONLY);
+    end if;
 
     total_shares_val := shares_val*NEW.num_shares;
 
@@ -393,9 +420,9 @@ CREATE TRIGGER price_jump
     for each row
     EXECUTE FUNCTION price_jump();
 
-INSERT INTO owns (login,symbol,shares) VALUES ('mike','MM',8);
+/*INSERT INTO owns (login,symbol,shares) VALUES ('mike','MM',8);
 INSERT INTO closing_price (symbol,price,p_date) VALUES ('MM',30, (select * from mutual_date));
-
+*/
 
 /*Sell shares*/
 CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_shares int)
@@ -410,9 +437,16 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
     BEGIN
 
     shares_val := (SELECT PRICE FROM closing_price
+            WHERE symbol LIKE symb and p_date = (select * from mutual_date)
+            ORDER BY P_DATE DESC
+            FETCH FIRST ROW ONLY);
+
+    if shares_val is null then
+        shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE symb
             ORDER BY P_DATE DESC
             FETCH FIRST ROW ONLY);
+    end if;
 
     total_shares_val := shares_val * numb_shares;
 
@@ -420,7 +454,7 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
             WHERE login LIKE log and symbol like symb
             FETCH FIRST ROW ONLY);
 
-    IF buyer_shares = null THEN return False;
+    IF buyer_shares is null THEN return False;
     END IF;
 
     new_buyer_shares := buyer_shares - numb_shares;
@@ -433,6 +467,9 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
         SET shares = shares - numb_shares
         WHERE login=login and symbol=symb;
 
+    DELETE FROM owns where shares=0;
+
+
     /*This calls the trigger that we had to make*/
     INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (log, symb, (select * from mutual_date), 'sell',  numb_shares, shares_val, total_shares_val);
 
@@ -441,54 +478,27 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
     END;
     $$ LANGUAGE plpgsql;
 
-SELECT SELL_SHARES( 'mike', 'MM', 1);
-
-
-/*Helper function to help with getting top-k for Admin #5
-  Ask the user to supply the k value, and display the corresponding categories. The categories
-    in the result are the top k categories based on the number of shares owned by customers
- */
-
+/*SELECT SELL_SHARES( 'mike', 'MM', 1);*/
 
 /* join login to closing price where we have retrived the latest closing price for all of the stocks*/
-DROP VIEW INVESTOR_RANK
-CREATE VIEW INVESTOR_RANK AS
-    SELECT login, sum(shares*price) FROM OWNS JOIN
-        MOST_RECENT_STOCK_VAL ON OWNS.symbol = MOST_RECENT_STOCK_VAL.symbol
-    GROUP BY login
-    ORDER BY sum(shares*price) DESC;
-
-CREATE VIEW MOST_RECENT_STOCK_VAL AS
+CREATE OR REPLACE VIEW MOST_RECENT_STOCK_VAL AS
     SELECT CLOSING_PRICE.symbol, price FROM CLOSING_PRICE JOIN (
             SELECT symbol, MAX(p_date) as p_date from closing_price
             GROUP BY symbol)
             as MAX_DATE on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
 
-SELECT * from INVESTOR_RANK
+CREATE OR REPLACE VIEW INVESTOR_RANK AS
+    SELECT login, sum(shares*price) FROM OWNS JOIN
+        MOST_RECENT_STOCK_VAL ON OWNS.symbol = MOST_RECENT_STOCK_VAL.symbol
+    GROUP BY login
+    ORDER BY sum(shares*price) DESC;
 
-
-/*This gets the latest price for all of the different stocks... could be good to use as a view?*/
-SELECT CLOSING_PRICE.symbol as symbol, price FROM CLOSING_PRICE JOIN (
-    SELECT symbol, MAX(p_date) as p_date from closing_price
-    GROUP BY symbol) as MAX_DATE
-    on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
-
-SELECT action, symbol, sum(amount) from trxlog
-    WHERE login='mike' and action='buy'
-    GROUP BY action, symbol;
-
-SELECT action, symbol, sum(amount) from trxlog
-    WHERE login='mike' and action='sell'
-    GROUP BY action, symbol;
-
-SELECT * from trxlog WHERE login='mike' and action='buy'
-drop function get_portfolio(user_login varchar)
 CREATE OR REPLACE FUNCTION get_portfolio(user_login varchar)
 RETURNS TABLE(mf_symb varchar(20), mf_shares_owned int, mf_val decimal(10,2), mf_cost decimal(10,2), mf_adj_cost decimal(10,2), mf_yield decimal(10,2) ) AS
     $$DECLARE
     BEGIN
 
-    RETURN QUERY SELECT bought_sold.symbol, shares as shares_owned, shares*price as current_val_of_mutual_fund, buy as cost, sell-buy as adj_cost, (shares*price)-(sell-buy) as yield
+    RETURN QUERY SELECT bought_sold.symbol, shares as shares_owned, shares*price as current_val_of_mutual_fund, buy as cost, buy-sell as adj_cost, (shares*price)-(buy-sell) as yield
         FROM (SELECT login, buy.symbol as symbol, buy, sell FROM (SELECT login, action, symbol, sum(amount) as buy from trxlog
                 WHERE login=user_login and action='buy'
                 GROUP BY login, action, symbol) as buy
@@ -505,6 +515,6 @@ RETURNS TABLE(mf_symb varchar(20), mf_shares_owned int, mf_val decimal(10,2), mf
     $$
     LANGUAGE 'plpgsql';
 
-select * from get_portfolio('mike');
+select * from get_portfolio('mi');
 
 
