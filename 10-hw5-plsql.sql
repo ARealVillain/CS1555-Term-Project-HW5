@@ -44,6 +44,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
         cur_symbol varchar(20);
         cur_price decimal(10,2);
         cur_allocation record;
+        bought boolean;
 
         /*query to determine allocation number that has the same login as the parameter with max date*/
         allocation_number int := (select allocation_no from allocation where login=cur_login order by P_DATE desc limit 1);
@@ -51,6 +52,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
     BEGIN
         OPEN preference_cursor;
         /* loops through the cursor that has stored every allocation_no that matches the login given*/
+        INSERT INTO TRXLOG (login,symbol,t_date,action,amount) VALUES ( cur_login, cur_symbol, CURRENT_DATE, 'deposit', amount);
         LOOP
             FETCH preference_cursor INTO cur_allocation;
             if not found then
@@ -63,22 +65,10 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
 
             /* calculate the amount of shares that should be purchased*/
             shares_to_buy:=FLOOR(cur_percent*amount/cur_price);
-
             /* use the buy_shares function to purchase the shares*/
-            if shares_to_buy >0 then
-                INSERT INTO TRXLOG (trx_id,login,symbol,t_date,action,num_shares,price,amount) VALUES ((SELECT MAX(trx_id) FROM trxlog)+1, cur_login, cur_symbol, CURRENT_DATE, 'deposit',  shares_to_buy, cur_price, shares_to_buy*cur_price);
-                perform shares from owns where login = cur_login and symbol = cur_symbol;
-                if found then
-                    update owns
-                    set shares = shares + shares_to_buy
-                    where login=cur_login and symbol=cur_symbol;
-                else
-                    INSERT INTO OWNS(login,symbol,shares) VALUES(cur_login,cur_symbol,shares_to_buy);
-                end if;
-                /*sum the amount spent*/
-                cur_amount = cur_amount +shares_to_buy*cur_price;
+            if shares_to_buy > 0 then
+                bought := buy_shares(cur_login, cur_symbol, shares_to_buy);
             end if;
-
         END LOOP;
         amount:=amount-cur_amount;
         close preference_cursor;
@@ -90,7 +80,7 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
         commit;
     END;
     $$;
-CALL deposit_for_investment('mike', 100);
+CALL deposit_for_investment('mike', 1000);
 
 
 /* Task/Question 4 */
@@ -488,5 +478,5 @@ SELECT CLOSING_PRICE.symbol as symbol, price FROM CLOSING_PRICE JOIN (
     on CLOSING_PRICE.p_date = MAX_DATE.p_date and CLOSING_PRICE.symbol = MAX_DATE.symbol
 
 SELECT action, symbol, sum(amount) from trxlog
-    WHERE login='mike'
+    WHERE login='mike' and action!='deposit'
     GROUP BY action, symbol
