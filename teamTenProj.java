@@ -1,6 +1,7 @@
 import java.util.*;
 
 import javax.print.attribute.standard.PresentationDirection;
+import javax.swing.tree.ExpandVetoException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -69,19 +70,48 @@ public class teamTenProj {
                     userOp = scan.nextLine();
                     System.out.println("------------------------------------------------------------------");
                     if(userOp.equals("1")) {
-                        eraseDatabase(conn, scan);
+                        try {
+                            eraseDatabase(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("2")) {
-                        addCustomer(conn, scan);
+
+                        try {
+                            addCustomer(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("3")) {
-                        addMutualFund(conn, scan);
+                        try {
+                            addMutualFund(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("4")) {
-                        updateShares(conn, scan);
+                        try {
+                            updateShares(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("5")) {
-                        topK(conn, scan);
+                        try {
+                            topK(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("6")) {
-                        rankInvestors(conn, scan);
+                        try {
+                            rankInvestors(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("7")) {
-                        updateDate(conn, scan);
+                        try {
+                            updateDate(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("8")) {
                         adminFlag = false;
                     } else if(userOp.equals("9")) {
@@ -135,29 +165,77 @@ public class teamTenProj {
                     userOp = scan.nextLine();
                     System.out.println("------------------------------------------------------------------");
                     if(userOp.equals("1")) {
-                        showBalance(userName, conn);
+                        try {
+                            showBalance(userName, conn);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("2")) {
-                        showMFNames(conn);
+                        try {
+                            showMFNames(conn);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("3")) {
-                        showMFPrices(conn, scan);
+                        try {
+                            showMFPrices(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("4")) {
-                        searchMutualFund(conn, scan);
+                        try {
+                            searchMutualFund(conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("5")) {
-                        depositAmount(userName, conn, scan);
+                        try {
+                            depositAmount(userName, conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("6")) {
-                        buyShares(userName, conn, scan);
+                        try {
+                            buyShares(userName, conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("7")) {
-                        sellShares(userName, conn, scan);
+                        try {
+                            sellShares(userName, conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("8")) {
-                        showROI(userName, conn, scan);
+                        try {
+                            showROI(userName, conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("9")) {
-                        predict(userName, conn, scan);
+                        try {
+                            predict(userName, conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("10")) {
-                        changePreference(userName, conn, scan);
+                        try {
+                            changePreference(userName, conn, scan);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("11")) {
-                        rankAllocations();
+                        try {
+                            rankAllocations();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("12")) {
-                        showPortfolio(conn, scan, userName);
+                        try {
+                            showPortfolio(conn, scan, userName);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if(userOp.equals("13")) {
                         custFlag = false;
                     } else if(userOp.equals("14")) {
