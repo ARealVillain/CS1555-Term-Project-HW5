@@ -73,44 +73,44 @@ public class teamTenProj {
                         try {
                             eraseDatabase(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("2")) {
 
                         try {
                             addCustomer(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("3")) {
                         try {
                             addMutualFund(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("4")) {
                         try {
                             updateShares(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("5")) {
                         try {
                             topK(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("6")) {
                         try {
                             rankInvestors(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("7")) {
                         try {
                             updateDate(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("8")) {
                         adminFlag = false;
@@ -168,73 +168,73 @@ public class teamTenProj {
                         try {
                             showBalance(userName, conn);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("2")) {
                         try {
                             showMFNames(conn);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("3")) {
                         try {
                             showMFPrices(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("4")) {
                         try {
                             searchMutualFund(conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("5")) {
                         try {
                             depositAmount(userName, conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("6")) {
                         try {
                             buyShares(userName, conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("7")) {
                         try {
                             sellShares(userName, conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("8")) {
                         try {
                             showROI(userName, conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("9")) {
                         try {
                             predict(userName, conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("10")) {
                         try {
                             changePreference(userName, conn, scan);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("11")) {
                         try {
                             rankAllocations();
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("12")) {
                         try {
                             showPortfolio(conn, scan, userName);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("13")) {
                         custFlag = false;
