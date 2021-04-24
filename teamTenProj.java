@@ -34,6 +34,7 @@ public class teamTenProj {
             if(userType.equals("admin")) {
                 //Login... should probably be moved to a function
                 Boolean loggedIn = false;
+                boolean adminFlag = true;
                 while(loggedIn == false){
                     System.out.println("Please login to continue: ");
                     System.out.println("What is your user name?");
@@ -48,22 +49,28 @@ public class teamTenProj {
                     loginPs.setString(2, password);
 
                     //execute a query
-                    ResultSet res1 = loginPs.executeQuery();
+                    try{
+                        ResultSet res1 = loginPs.executeQuery();
+                        //Assess
+                        String rid = null;
+                        while (res1.next()) {
+                            rid = res1.getString("login");
+                        }
+                        
+                        if (rid == null){
+                            System.out.println("\nSorry thats a bad login!\n");
+                            adminFlag = false;
+                            loggedIn = true;
+                        }
+                        else
+                            loggedIn = true;
 
-                    //Assess
-                    String rid = null;
-                    while (res1.next()) {
-                        rid = res1.getString("login");
+                    }catch(Exception e){
                     }
-                    
-                    if (rid == null)
-                        System.out.println("\nSorry thats a bad login!\n");
-                    else
-                        loggedIn = true;
                 }
 
 
-                boolean adminFlag = true;
+                
                 while(adminFlag) {
                     printAdminMenu();
                     System.out.println("------------------------------------------------------------------");
@@ -142,20 +149,24 @@ public class teamTenProj {
                     PreparedStatement loginPs = conn.prepareStatement(loginQuery);
                     loginPs.setString(1, userName);
                     loginPs.setString(2, password);
+                    try{
+                        //execute a query
+                        ResultSet res1 = loginPs.executeQuery();
 
-                    //execute a query
-                    ResultSet res1 = loginPs.executeQuery();
-
-                    //Assess
-                    String rid = null;
-                    while (res1.next()) {
-                        rid = res1.getString("login");
-                    }
-                    
-                    if (rid == null)
-                        System.out.println("\nSorry thats a bad login!\n");
-                    else
-                        loggedIn = true;
+                        //Assess
+                        String rid = null;
+                        while (res1.next()) {
+                            rid = res1.getString("login");
+                        }
+                        
+                        if (rid == null){
+                            System.out.println("\nSorry thats a bad login!\n");
+                            loggedIn = true;
+                            custFlag = false;
+                        }
+                        else
+                            loggedIn = true;
+                    }catch(Exception e){}
                 }
 
                 while(custFlag) {
