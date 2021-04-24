@@ -15,10 +15,10 @@ public class teamTenProj {
 
         //Set up connection with SQL
         Class.forName("org.postgresql.Driver");
-        String url = "jdbc:postgresql://localhost/postgres";
+        String url = "jdbc:postgresql://clas3.cs.pitt.edu:5432/kkp19";
         Properties props = new Properties();
-        props.setProperty("user", "postgres");
-        props.setProperty("password", "102Camelot");
+        props.setProperty("user", "kkp19");
+        props.setProperty("password", "");
         Connection conn = DriverManager.getConnection(url, props);
 
 
@@ -80,44 +80,58 @@ public class teamTenProj {
                         try {
                             eraseDatabase(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Erase Database Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("2")) {
 
                         try {
                             addCustomer(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Add Customer Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("3")) {
                         try {
                             addMutualFund(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Add Mutual Fund Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("4")) {
                         try {
                             updateShares(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Update Shares Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("5")) {
                         try {
                             topK(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Show Top-K Categories Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("6")) {
                         try {
                             rankInvestors(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Rank Investors Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("7")) {
                         try {
                             updateDate(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Update Date Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("8")) {
                         adminFlag = false;
@@ -179,73 +193,97 @@ public class teamTenProj {
                         try {
                             showBalance(userName, conn);
                         } catch (Exception e) {
+                            System.out.println("Show Balance Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("2")) {
                         try {
                             showMFNames(conn);
                         } catch (Exception e) {
+                            System.out.println("Show Mutual Funds by Name Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("3")) {
                         try {
                             showMFPrices(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Show Mutual Funds by Price Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("4")) {
                         try {
                             searchMutualFund(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Search Mutual Fund Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("5")) {
                         try {
                             depositAmount(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Deposit Amount Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("6")) {
                         try {
                             buyShares(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Buy Shares Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("7")) {
                         try {
                             sellShares(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Sell Shares Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("8")) {
                         try {
                             showROI(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Show ROI Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("9")) {
                         try {
                             predict(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Prediction Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("10")) {
                         try {
                             changePreference(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Change Preference Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("11")) {
                         try {
                             rankAllocations(userName, conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Rank Allocation Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("12")) {
                         try {
                             showPortfolio(conn, scan, userName);
                         } catch (Exception e) {
+                            System.out.println("Show Portfolio Failed");
                             System.out.println(e.getMessage());
+                            System.out.println("------------------------------------------------------------------");
                         }
                     } else if(userOp.equals("13")) {
                         custFlag = false;
