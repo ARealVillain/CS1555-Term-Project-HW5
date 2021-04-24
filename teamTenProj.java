@@ -15,7 +15,7 @@ public class teamTenProj {
 
         //Set up connection with SQL
         Class.forName("org.postgresql.Driver");
-        String url = "jdbc:postgresql://clas3.cs.pitt.edu:5432/kkp19";
+        String url = "jdbc:postgresql://class3.cs.pitt.edu:5432/kkp19";
         Properties props = new Properties();
         props.setProperty("user", "kkp19");
         props.setProperty("password", "");
