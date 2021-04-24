@@ -226,7 +226,7 @@ public class teamTenProj {
                         }
                     } else if(userOp.equals("11")) {
                         try {
-                            rankAllocations();
+                            rankAllocations(userName, conn, scan);
                         } catch (Exception e) {
                             System.out.println(e.getMessage());
                         }
@@ -307,9 +307,75 @@ public class teamTenProj {
         return;
     }
 
-    private static void rankAllocations() {
+    private static void rankAllocations(String userName, Connection conn, Scanner scan) throws SQLException {
         System.out.println("Function to rank customer allocations");
         System.out.println("------------------------------------------------------------------");
+        HashMap<String, Double> map = new HashMap<String, Double>();
+        String createQuery = "CREATE TABLE RANK_ALLOCATION(allocationNUM int, weightedROI decimal(10, 2), CONSTRAINT pk_ra PRIMARY KEY (allocationNUM));";
+        PreparedStatement create = conn.prepareStatement(createQuery);
+        ResultSet rankTable = create.executeQuery();
+        String joinQuery = "SELECT * FROM ALLOCATION JOIN PREFERS ON ALLOCATION.allocation_no = PREFERS.allocation_no WHERE login=?";
+        PreparedStatement joinPs = conn.prepareStatement(joinQuery);
+        joinPs.setString(1, userName);
+        ResultSet joinRES = joinPs.executeQuery();
+        String query = "SELECT symbol,shares FROM OWNS WHERE login=?";
+        PreparedStatement roiPS = conn.prepareStatement(query);
+        roiPS.setString(1, userName);
+        ResultSet res = roiPS.executeQuery();
+        while(res.next()) {
+            String sym = res.getString("symbol");
+            int shares = res.getInt("shares");
+            int sharesCalc = 0;
+            Double totalCost = 0.0;
+            String mfQuery = "SELECT name FROM MUTUAL_FUND WHERE symbol=?";
+            PreparedStatement mfPs = conn.prepareStatement(mfQuery);
+            mfPs.setString(1, sym);
+            ResultSet mfRes = mfPs.executeQuery();
+            mfRes.next();
+            String name = mfRes.getString("name");
+            String priceQuery = "SELECT price FROM CLOSING_PRICE WHERE symbol=? ORDER BY p_date DESC LIMIT 1";
+            PreparedStatement pricePs = conn.prepareStatement(priceQuery);
+            pricePs.setString(1, sym);
+            ResultSet priceRes = pricePs.executeQuery();
+            priceRes.next();
+            Double curPrice = Double.parseDouble(priceRes.getString("price"));
+            String trxlogQuery = "SELECT symbol,action,num_shares,price FROM TRXLOG WHERE login=? AND symbol=? AND action='buy' ORDER BY t_date DESC";
+            PreparedStatement trxlogPs = conn.prepareStatement(trxlogQuery);
+            trxlogPs.setString(1, userName);
+            trxlogPs.setString(2, sym);
+            ResultSet trxRes = trxlogPs.executeQuery();
+            while(trxRes.next()) {
+                int tShares = trxRes.getInt("num_shares");
+                Double price = trxRes.getDouble("price");
+                if(sharesCalc < shares) {
+                    sharesCalc += tShares;
+                    totalCost += (price * tShares);
+                }
+            }
+            Double currValue = curPrice * shares;
+            Double roi = (currValue - totalCost) / totalCost;
+            map.put(sym, roi);
+        }
+        String insertQuery = "INSERT INTO RANK_ALLOCATION (allocationNUM, weightedROI) VALUES (?,?)";
+        PreparedStatement insert = conn.prepareStatement(insertQuery);
+        while(joinRES.next()) {
+            int alNUM = joinRES.getInt("ALLOCATION.allocation_no");
+            String sym = joinRES.getString("symbol");
+            Double percent = joinRES.getDouble("percentage");
+            if(map.containsKey(sym)) {
+                Double roi = map.get(sym);
+                Double wROI = roi * percent;
+                insert.setInt(1, alNUM);
+                insert.setDouble(2, wROI);
+                insert.execute();
+            } else {
+                Double wROI = 0.0;
+                insert.setInt(1, alNUM);
+                insert.setDouble(2, wROI);
+                insert.execute();
+            }
+        }
+        String rankQuery = "SELECT *, SUM(weightedROI) FROM RANK_ALLOCATION GROUP BY allocationNUM ORDERY BY SUM(weightedROI)";
         return;
     }
 
