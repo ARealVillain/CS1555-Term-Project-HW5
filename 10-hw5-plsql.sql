@@ -404,7 +404,7 @@ CREATE OR REPLACE FUNCTION price_jump()
                 end if;
                 ownedShares:=owners.shares;
                 /*insert the current transaction which will update the balance of the user with the above trigger*/
-                INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (owners.login, curSymbol , current_timestamp, 'sell',  ownedShares, curPrice, curPrice*ownedShares);
+                INSERT INTO TRXLOG (login,symbol,t_date,action,num_shares,price,amount) VALUES (owners.login, curSymbol , (select * from mutual_date), 'sell',  ownedShares, curPrice, curPrice*ownedShares);
                 /* delete the shares from the owns table to sell them*/
                 DELETE FROM owns where symbol like curSymbol and login like owners.Login;
             END LOOP;
