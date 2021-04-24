@@ -180,6 +180,7 @@ public class teamTenProj {
                         try {
                             showMFPrices(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Please make sure you input the date as <YYYY-MM-DD>");
                             System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("4")) {
@@ -525,7 +526,7 @@ public class teamTenProj {
 
         Boolean succeeded = sellShares.getBoolean(1);
         if(!succeeded)
-            System.out.println("Sorry something went wrong");
+            System.out.println("Sorry you do not have enough shares");
         sellShares.close();
         return;
     }
