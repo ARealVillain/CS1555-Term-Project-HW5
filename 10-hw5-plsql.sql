@@ -53,6 +53,9 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
         OPEN preference_cursor;
         /* loops through the cursor that has stored every allocation_no that matches the login given*/
         INSERT INTO TRXLOG (login,symbol,t_date,action,amount) VALUES ( cur_login, cur_symbol, (select * from mutual_date), 'deposit', amount);
+        UPDATE customer
+            SET balance = balance + amount
+            WHERE login = cur_login;
         LOOP
             FETCH preference_cursor INTO cur_allocation;
             if not found then
@@ -68,26 +71,19 @@ CREATE OR REPLACE PROCEDURE deposit_for_investment (cur_login varchar(10), amoun
             /* calculate the amount of shares that should be purchased*/
             shares_to_buy:=FLOOR(cur_percent*amount/cur_price);
 
-
             /* use the buy_shares function to purchase the shares*/
             if shares_to_buy > 0 then
+                raise notice 'Value: %', cur_symbol;
+                raise notice 'Value: %', shares_to_buy;
                 bought := buy_shares(cur_login, cur_symbol, shares_to_buy);
             end if;
         END LOOP;
 
-        amount:=amount-cur_amount;
-
         close preference_cursor;
-        /* adds the remaining deposit to the customers balance*/
-        UPDATE customer
-        SET balance = balance + amount
-        WHERE login = cur_login;
-
-        commit;
     END;
     $$;
 
-
+call deposit_for_investment('mike', 1000)
 
 /* Task/Question 4 */
 DROP FUNCTION buy_shares(login varchar, symb varchar, num_shares integer);
@@ -101,6 +97,8 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
     new_buyer_cap decimal(10, 2);
     last_trx int;
     BEGIN
+
+    set transaction read write;
     /*Get the most recent day's value for the stock*/
     shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE symb and p_date = (select * from mutual_date)
@@ -139,9 +137,11 @@ CREATE OR REPLACE FUNCTION BUY_SHARES (log varchar(30), symb varchar(30), numb_s
         update owns
         set shares = shares + numb_shares
         where login=log and symbol=symb;
+
     else
         INSERT INTO OWNS(login,symbol,shares) VALUES(log,symb,numb_shares);
     end if;
+
     RETURN TRUE;
 
     END;
@@ -435,7 +435,7 @@ CREATE OR REPLACE FUNCTION SELL_SHARES (log varchar(30), symb varchar(30), numb_
     buyer_shares decimal(10, 2);
     new_buyer_shares decimal(10, 2);
     BEGIN
-
+    set transaction read write;
     shares_val := (SELECT PRICE FROM closing_price
             WHERE symbol LIKE symb and p_date = (select * from mutual_date)
             ORDER BY P_DATE DESC
