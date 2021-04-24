@@ -18,7 +18,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "frogger26");
+        props.setProperty("password", "102Camelot");
         Connection conn = DriverManager.getConnection(url, props);
 
 
@@ -311,9 +311,11 @@ public class teamTenProj {
         System.out.println("Function to rank customer allocations");
         System.out.println("------------------------------------------------------------------");
         HashMap<String, Double> map = new HashMap<String, Double>();
-        String createQuery = "CREATE TABLE RANK_ALLOCATION(allocationNUM int, weightedROI decimal(10, 2), CONSTRAINT pk_ra PRIMARY KEY (allocationNUM));";
+
+        String createQuery = "CREATE TABLE RANK_ALLOCATION(allocationNUM int, weightedROI decimal(10, 2));";
         PreparedStatement create = conn.prepareStatement(createQuery);
-        ResultSet rankTable = create.executeQuery();
+        create.execute();
+        
         String joinQuery = "SELECT * FROM ALLOCATION JOIN PREFERS ON ALLOCATION.allocation_no = PREFERS.allocation_no WHERE login=?";
         PreparedStatement joinPs = conn.prepareStatement(joinQuery);
         joinPs.setString(1, userName);
@@ -359,7 +361,7 @@ public class teamTenProj {
         String insertQuery = "INSERT INTO RANK_ALLOCATION (allocationNUM, weightedROI) VALUES (?,?)";
         PreparedStatement insert = conn.prepareStatement(insertQuery);
         while(joinRES.next()) {
-            int alNUM = joinRES.getInt("ALLOCATION.allocation_no");
+            int alNUM = joinRES.getInt("allocation_no");
             String sym = joinRES.getString("symbol");
             Double percent = joinRES.getDouble("percentage");
             if(map.containsKey(sym)) {
@@ -375,7 +377,18 @@ public class teamTenProj {
                 insert.execute();
             }
         }
-        String rankQuery = "SELECT *, SUM(weightedROI) FROM RANK_ALLOCATION GROUP BY allocationNUM ORDERY BY SUM(weightedROI)";
+        String rankQuery = "SELECT allocationNUM, sum(weightedROI) FROM RANK_ALLOCATION GROUP BY allocationNUM ORDER BY sum(weightedROI) desc;";
+        PreparedStatement rankPs = conn.prepareStatement(rankQuery);
+        ResultSet rankRES = rankPs.executeQuery();
+        System.out.println("Here is the ranked list of allocations:");
+        while(rankRES.next()) {
+            System.out.println(String.valueOf(rankRES.getInt("allocationNUM")));
+        }
+
+        String dropQuery = "DROP TABLE IF EXISTS RANK_ALLOCATION;";
+        PreparedStatement drop = conn.prepareStatement(dropQuery);
+        drop.execute();
+
         return;
     }
 
