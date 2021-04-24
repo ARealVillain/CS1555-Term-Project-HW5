@@ -18,7 +18,7 @@ public class teamTenProj {
         String url = "jdbc:postgresql://localhost/postgres";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "102Camelot");
+        props.setProperty("password", "frogger26");
         Connection conn = DriverManager.getConnection(url, props);
 
 
@@ -324,11 +324,17 @@ public class teamTenProj {
         PreparedStatement datePs = conn.prepareStatement(dateQuery);
         datePs.setString(1, userName);
         ResultSet dateRes = datePs.executeQuery();
+        
+        // getting the mutual_date
+        String mDateQuery = "SELECT p_date FROM MUTUAL_DATE";
+        PreparedStatement mDatePs = conn.prepareStatement(mDateQuery);
+        ResultSet mDateRes = mDatePs.executeQuery();
+        mDateRes.next();
+        LocalDateTime now = mDateRes.getTimestamp("p_date").toLocalDateTime();
         if(dateRes.next()) {
-           Timestamp time = dateRes.getTimestamp("p_date");
-           LocalDateTime now = LocalDateTime.now();
-           LocalDateTime time2 = time.toLocalDateTime();
-           if(now.getYear() == time2.getYear() && now.getDayOfYear() == time2.getDayOfYear()) {
+           LocalDateTime time = dateRes.getTimestamp("p_date").toLocalDateTime();
+   
+           if(now.getYear() == time.getYear() && now.getDayOfYear() == time.getDayOfYear()) {
                System.out.println("You already made an allocation today, try again tomorrow");
                System.out.println();
                return;
@@ -355,7 +361,7 @@ public class teamTenProj {
         PreparedStatement allocationPs = conn.prepareStatement(allocationIn);
         allocationPs.setInt(1, allocationNum);
         allocationPs.setString(2, userName);
-        allocationPs.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+        allocationPs.setTimestamp(3, Timestamp.valueOf(now));
         allocationPs.executeUpdate();
         
         while(notDone==true) {
@@ -405,6 +411,7 @@ public class teamTenProj {
         double curPrice;
         
         while (trxlogRes.next()) {
+            if( trxlogRes.getString("action").equals("deposit")) {continue;}
             rSymbol = trxlogRes.getString("symbol");
             rAction = trxlogRes.getString("action");
             rShares = trxlogRes.getInt("num_shares");
@@ -437,6 +444,7 @@ public class teamTenProj {
                 else {
                     System.out.println("hold");
                 }
+                System.out.println();
             }
             else if(rAction.equals("sell")) {
                 System.out.println("symbol:"+rSymbol);
@@ -456,8 +464,9 @@ public class teamTenProj {
                 else {
                     System.out.println("hold");
                 }
+                System.out.println();
             }
-            System.out.println();
+            
         }
         return;
     }
@@ -562,7 +571,7 @@ public class teamTenProj {
             System.out.println("What symbol would you like to buy?");
             String symbol = scn.nextLine();
 
-            System.out.println("What number of shares would you like to buy?");
+            System.out.println("What amount would you like to spend?");
             int amount = Integer.parseInt(scn.nextLine());
 
             CallableStatement buyShares = conn.prepareCall("{?=call buy_shares_by_amount( ? , ? , ? )}");
