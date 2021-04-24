@@ -31,6 +31,7 @@ public class teamTenProj {
         userType = scan.nextLine();
         while(!userType.equals("quit")) {
             System.out.println("------------------------------------------------------------------");
+            boolean adminFlag = true;
             if(userType.equals("admin")) {
                 //Login... should probably be moved to a function
                 Boolean loggedIn = false;
@@ -47,6 +48,8 @@ public class teamTenProj {
                     loginPs.setString(1, userName);
                     loginPs.setString(2, password);
 
+
+
                     //execute a query
                     ResultSet res1 = loginPs.executeQuery();
 
@@ -56,14 +59,18 @@ public class teamTenProj {
                         rid = res1.getString("login");
                     }
                     
-                    if (rid == null)
+                    if (rid == null){
                         System.out.println("\nSorry thats a bad login!\n");
+                        loggedIn = true;
+                        adminFlag=false;
+                        break;
+                    }
                     else
                         loggedIn = true;
                 }
 
 
-                boolean adminFlag = true;
+                
                 while(adminFlag) {
                     printAdminMenu();
                     System.out.println("------------------------------------------------------------------");
@@ -152,8 +159,11 @@ public class teamTenProj {
                         rid = res1.getString("login");
                     }
                     
-                    if (rid == null)
+                    if (rid == null){
                         System.out.println("\nSorry thats a bad login!\n");
+                        custFlag = false;
+                        loggedIn = true;
+                    }
                     else
                         loggedIn = true;
                 }
@@ -180,6 +190,7 @@ public class teamTenProj {
                         try {
                             showMFPrices(conn, scan);
                         } catch (Exception e) {
+                            System.out.println("Please make sure that you use the format <YYYY-MM-DD>");
                             System.out.println(e.getMessage());
                         }
                     } else if(userOp.equals("4")) {
@@ -405,6 +416,8 @@ public class teamTenProj {
         double curPrice;
         
         while (trxlogRes.next()) {
+            if( trxlogRes.getString("action").equals("deposit")) {continue;}
+
             rSymbol = trxlogRes.getString("symbol");
             rAction = trxlogRes.getString("action");
             rShares = trxlogRes.getInt("num_shares");
@@ -525,7 +538,7 @@ public class teamTenProj {
 
         Boolean succeeded = sellShares.getBoolean(1);
         if(!succeeded)
-            System.out.println("Sorry something went wrong");
+            System.out.println("Sorry, you do not have enough shares to sell that many");
         sellShares.close();
         return;
     }
